@@ -41,14 +41,14 @@ export const addJob = async (req, res) => {
 
 export const getAllJobs = async (req, res) => {
   try {
-    const { userId } = req.user?.id;
+    const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
     const jobs = await prisma.job.findMany({
-      where: { id: userId },
+      where: { userId: userId },
       include: { candidates: true },
       orderBy: { createdAt: "desc" },
     });
