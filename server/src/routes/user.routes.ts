@@ -9,9 +9,9 @@ import { verifyToken } from "../middlewares/auth.middleware";
 
 const router = express.Router();
 
-router.route("/signup").post(signUp);
-router.route("/signin").post(signIn);
-router.route("/user-details").get(verifyToken as any, userDetails);
-router.route("/update-password").post(verifyToken as any, updatePassword);
+router.post("/signup", signUp);
+router.post("/signin", signIn);
+router.get("/user-details", verifyToken as any, userDetails);
+router.post("/update-password", verifyToken as any, updatePassword);
 
 export default router;

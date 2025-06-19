@@ -76,18 +76,14 @@ export const signUp = async (req, res) => {
 }
 
 export const signIn = async (req, res) => {
-  const parseResult = signInSchema.safeParse(req.body);
-  if (!parseResult.success) {
-    return res.status(400).json({ error: parseResult.error.errors });
-  }
-  const { email, password } = parseResult.data;
-
-  if (!email || !password) {
-    res.status(400).json({ error: "All field are required" });
-    return;
-  }
 
   try {
+    const parseResult = signInSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ error: parseResult.error.errors });
+    }
+    const { email, password } = parseResult.data;
+
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       res.status(404).json({ error: 'User not found.' });
