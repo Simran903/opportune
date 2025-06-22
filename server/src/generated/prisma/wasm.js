@@ -141,19 +141,9 @@ exports.Prisma.JobScalarFieldEnum = {
 
 exports.Prisma.CandidateScalarFieldEnum = {
   id: 'id',
-  name: 'name',
-  location: 'location',
   profileUrl: 'profileUrl',
-  matchScore: 'matchScore',
   createdAt: 'createdAt',
   jobId: 'jobId'
-};
-
-exports.Prisma.SavedCandidateScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  candidateId: 'candidateId',
-  savedAt: 'savedAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -175,8 +165,7 @@ exports.Prisma.NullsOrder = {
 exports.Prisma.ModelName = {
   User: 'User',
   Job: 'Job',
-  Candidate: 'Candidate',
-  SavedCandidate: 'SavedCandidate'
+  Candidate: 'Candidate'
 };
 
 /**
