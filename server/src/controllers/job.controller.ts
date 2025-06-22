@@ -1,24 +1,30 @@
 import { z } from "zod";
 import prisma from "../config/client";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
 
 const jobSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   location: z.string().optional(),
   company: z.string().min(1, "Company is required"),
-  userId: z.number().int().positive("Valid userId is required"),
 });
 
 export const addJob = async (req, res) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    return res.status(401).json({ message: "User not authenticated" });
+  }
+
   try {
     const parsedData = jobSchema.safeParse(req.body);
-
     if (!parsedData.success) {
-      const errors = parsedData.error.format();
-      return res.status(400).json({ message: "Validation failed", errors });
+      return res.status(400).json({ message: "Validation failed", errors: parsedData.error.format() });
     }
 
-    const { userId, title, description, location, company } = parsedData.data;
+    const { title, description, location, company } = parsedData.data;
 
     const job = await prisma.job.create({
       data: {
@@ -26,15 +32,34 @@ export const addJob = async (req, res) => {
         description,
         location,
         company,
-        user: {
-          connect: { id: userId },
-        },
+        user: { connect: { id: userId } },
       },
     });
 
-    return res.status(201).json({ message: "Job created successfully", job });
+    const command = `echo "${description}" | ./python/run_scraper.sh`;
+    const { stdout } = await execAsync(command, { maxBuffer: 1024 * 1000 });
+
+    const candidates = JSON.parse(stdout);
+
+    for (const candidate of candidates) {
+      await prisma.candidate.create({
+        data: {
+          name: candidate.name,
+          location: candidate.location,
+          profileUrl: candidate.profileUrl,
+          matchScore: candidate.score,
+          job: { connect: { id: job.id } },
+        },
+      });
+    }
+
+    return res.status(201).json({
+      message: "Job created and candidates matched successfully",
+      job,
+      candidates,
+    });
   } catch (error) {
-    console.error("Error creating job:", error);
+    console.error("Error in addJob:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
