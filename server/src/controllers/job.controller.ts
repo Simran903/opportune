@@ -44,10 +44,7 @@ export const addJob = async (req, res) => {
     for (const candidate of candidates) {
       await prisma.candidate.create({
         data: {
-          name: candidate.name,
-          location: candidate.location,
           profileUrl: candidate.profileUrl,
-          matchScore: candidate.score,
           job: { connect: { id: job.id } },
         },
       });
