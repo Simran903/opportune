@@ -1,16 +1,38 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Input } from "@/components/ui/input";
+import axiosClient from "@/lib/axiosClient"; // adjust path if needed
 
-export default function SignupPage() {
+const SignupPage = () => {
   const { getThemeClasses } = useTheme();
   const theme = getThemeClasses;
+  const router = useRouter();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await axiosClient.post("/user/signup", form);
+      if (res.status === 201 || res.status === 200) {
+        router.push("/dashboard");
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Signup failed.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -25,7 +47,7 @@ export default function SignupPage() {
         >
           Sign Up
         </h2>
-        <form className="space-y-5">
+        <form className="space-y-5" onSubmit={handleSubmit}>
           <div>
             <label
               className={`block mb-1 font-medium ${theme.text.secondary}`}
@@ -39,8 +61,9 @@ export default function SignupPage() {
               type="text"
               value={form.name}
               onChange={handleChange}
-              className={`w-full px-4 py-3 rounded-xl border transition-all duration-300 focus:outline-none ${theme.input}`}
+              className={`w-full px-4 py-3 rounded-xl border ${theme.input}`}
               autoComplete="name"
+              required
             />
           </div>
           <div>
@@ -56,8 +79,9 @@ export default function SignupPage() {
               type="email"
               value={form.email}
               onChange={handleChange}
-              className={`w-full px-4 py-3 rounded-xl border transition-all duration-300 focus:outline-none ${theme.input}`}
+              className={`w-full px-4 py-3 rounded-xl border ${theme.input}`}
               autoComplete="email"
+              required
             />
           </div>
           <div>
@@ -73,19 +97,23 @@ export default function SignupPage() {
               type="password"
               value={form.password}
               onChange={handleChange}
-              className={`w-full px-4 py-3 rounded-xl border transition-all duration-300 focus:outline-none ${theme.input}`}
+              className={`w-full px-4 py-3 rounded-xl border ${theme.input}`}
               autoComplete="new-password"
+              required
             />
           </div>
+
+          {error && <p className="text-sm text-red-500">{error}</p>}
+
           <button
             type="submit"
             className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 mt-4 ${theme.button.primary} shadow-lg hover:shadow-xl`}
-            disabled
+            disabled={loading}
           >
-            Create Account
+            {loading ? "Creating Account..." : "Create Account"}
           </button>
         </form>
-        {/* Sign In Link */}
+
         <p className={`mt-6 text-center text-sm ${theme.text.secondary}`}>
           Already have an account?{" "}
           <Link
@@ -98,4 +126,6 @@ export default function SignupPage() {
       </div>
     </div>
   );
-}
+};
+
+export default SignupPage;
