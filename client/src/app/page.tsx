@@ -28,9 +28,11 @@ import {
   Zap,
   Moon,
   Sun,
+  Star,
 } from "lucide-react";
-import { useState } from "react";
 import Link from "next/link";
+import { useTheme } from "@/contexts/ThemeContext";
+import { ThemeToggleButton } from "@/components/ThemeToggleButton";
 
 const navItems = [
   { name: "Home", href: "#home", external: false },
@@ -114,7 +116,7 @@ const testimonials = [
   },
   {
     quote: "Our hiring pipeline just got 10x faster.",
-    text: "We reduced our average hiring time from 3 weeks to 4 days. That’s not just faster — it’s smarter hiring. Highly recommended for early-stage teams.",
+    text: "We reduced our average hiring time from 3 weeks to 4 days. That's not just faster — it's smarter hiring. Highly recommended for early-stage teams.",
     initial: "R",
     name: "Rohit Malhotra",
     role: "Founder",
@@ -176,7 +178,8 @@ const stats = [
 ];
 
 export default function HomePage() {
-  const [isDark, setIsDark] = useState(true);
+  const { isDark, getThemeClasses, getAnimatedBg } = useTheme();
+  const theme = getThemeClasses;
 
   const triggerClasses = isDark
     ? "bg-transparent hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white data-[active]:bg-white/10 data-[state=open]:bg-white/10 h-10 px-3 sm:px-5 py-2 text-sm font-medium transition-all duration-300 rounded-full border-0 cursor-pointer backdrop-blur-sm text-slate-300"
@@ -184,38 +187,19 @@ export default function HomePage() {
 
   return (
     <div
-      className={`min-h-screen transition-all duration-500 relative overflow-hidden ${isDark
-        ? "bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900"
-        : "bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-100"
-        }`}
+      className={`min-h-screen transition-all duration-500 relative overflow-hidden ${theme.background}`}
     >
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div
-          className={`absolute -top-10 -right-10 w-48 sm:w-72 h-48 sm:h-72 rounded-full blur-3xl animate-pulse ${isDark
-            ? "bg-gradient-to-br from-emerald-600/20 to-teal-600/20"
-            : "bg-gradient-to-br from-emerald-400/20 to-teal-400/20"
-            }`}
-        ></div>
-        <div
-          className={`absolute top-1/2 -left-10 sm:-left-20 w-64 sm:w-96 h-64 sm:h-96 rounded-full blur-3xl animate-pulse delay-1000 ${isDark
-            ? "bg-gradient-to-br from-cyan-600/15 to-emerald-600/15"
-            : "bg-gradient-to-br from-cyan-400/15 to-emerald-400/15"
-            }`}
-        ></div>
-        <div
-          className={`absolute bottom-10 right-1/4 sm:right-1/3 w-48 sm:w-64 h-48 sm:h-64 rounded-full blur-3xl animate-pulse delay-2000 ${isDark
-            ? "bg-gradient-to-br from-teal-600/20 to-cyan-600/20"
-            : "bg-gradient-to-br from-teal-400/20 to-cyan-400/20"
-            }`}
-        ></div>
+        {getAnimatedBg().map((className, index) => (
+          <div key={index} className={className}></div>
+        ))}
       </div>
 
       {/* Navigation Section*/}
       <div className="fixed top-4 sm:top-6 left-1/2 transform -translate-x-1/2 z-50 w-[95%] sm:w-auto">
         <div
-          className={`backdrop-blur-xl border rounded-2xl shadow-xl px-3 sm:px-4 py-3 ${isDark ? "bg-slate-800/80 border-slate-700/50" : "bg-white/80 border-white/40"
-            }`}
+          className={`backdrop-blur-xl rounded-2xl shadow-xl px-3 sm:px-4 py-3 ${theme.nav}`}
         >
           <div className="flex items-center justify-between">
             <NavigationMenu viewport={false} className="max-w-full">
@@ -226,14 +210,18 @@ export default function HomePage() {
                       <Link href={item.href}>
                         <NavigationMenuTrigger className={triggerClasses}>
                           <span className="hidden sm:inline">{item.name}</span>
-                          <span className="sm:hidden text-xs">{item.name.slice(0, 4)}</span>
+                          <span className="sm:hidden text-xs">
+                            {item.name.slice(0, 4)}
+                          </span>
                         </NavigationMenuTrigger>
                       </Link>
                     ) : (
                       <a href={item.href}>
                         <NavigationMenuTrigger className={triggerClasses}>
                           <span className="hidden sm:inline">{item.name}</span>
-                          <span className="sm:hidden text-xs">{item.name.slice(0, 4)}</span>
+                          <span className="sm:hidden text-xs">
+                            {item.name.slice(0, 4)}
+                          </span>
                         </NavigationMenuTrigger>
                       </a>
                     )}
@@ -243,19 +231,7 @@ export default function HomePage() {
             </NavigationMenu>
 
             {/* Theme Toggle */}
-            <button
-              onClick={() => setIsDark(!isDark)}
-              className={`ml-3 sm:ml-4 p-2 rounded-full transition-all duration-300 ${isDark
-                ? "bg-slate-700 hover:bg-slate-600 text-yellow-400"
-                : "bg-slate-100 hover:bg-slate-200 text-slate-600"
-                }`}
-            >
-              {isDark ? (
-                <Sun className="w-4 h-4" />
-              ) : (
-                <Moon className="w-4 h-4" />
-              )}
-            </button>
+            <ThemeToggleButton />
           </div>
         </div>
       </div>
@@ -268,23 +244,22 @@ export default function HomePage() {
             <div className="space-y-6 sm:space-y-10 relative z-10 text-center lg:text-left">
               <div className="space-y-3">
                 <div
-                  className={`flex items-center justify-center lg:justify-start space-x-3 font-semibold text-sm tracking-wide ${isDark ? "text-emerald-400" : "text-emerald-700"
-                    }`}
+                  className={`flex items-center justify-center lg:justify-start space-x-3 font-semibold text-sm tracking-wide ${theme.accent.emerald}`}
                 >
                   <div
-                    className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-full ${isDark ? "bg-emerald-900/50" : "bg-emerald-100"
-                      }`}
+                    className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-full ${theme.badge}`}
                   >
                     <Sparkles className="w-4 h-4" />
-                    <span className="text-xs sm:text-sm">FOR EMPLOYERS ONLY</span>
+                    <span className="text-xs sm:text-sm">
+                      FOR EMPLOYERS ONLY
+                    </span>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-6 sm:space-y-8">
                 <h1
-                  className={`text-4xl sm:text-6xl lg:text-7xl font-black leading-[0.9] tracking-tight ${isDark ? "text-white" : "text-slate-900"
-                    }`}
+                  className={`text-4xl sm:text-6xl lg:text-7xl font-black leading-[0.9] tracking-tight ${theme.text.primary}`}
                 >
                   Discover Top
                   <br />
@@ -292,21 +267,15 @@ export default function HomePage() {
                     Indian Talent,
                   </span>
                   <br />
-                  <span className={isDark ? "text-slate-300" : "text-slate-700"}>
-                    Effortlessly
-                  </span>
+                  <span className={theme.text.secondary}>Effortlessly</span>
                 </h1>
 
                 <p
-                  className={`text-lg sm:text-xl leading-relaxed max-w-lg font-medium mx-auto lg:mx-0 ${isDark ? "text-slate-300" : "text-slate-600"
-                    }`}
+                  className={`text-lg sm:text-xl leading-relaxed max-w-lg font-medium mx-auto lg:mx-0 ${theme.text.secondary}`}
                 >
                   Post jobs and automatically match relevant LinkedIn candidates
                   from India.
-                  <span
-                    className={`font-semibold ${isDark ? "text-emerald-400" : "text-emerald-600"
-                      }`}
-                  >
+                  <span className={`font-semibold ${theme.accent.emerald}`}>
                     {" "}
                     Powered by AI-driven
                   </span>{" "}
@@ -316,56 +285,27 @@ export default function HomePage() {
 
               {/* Stats */}
               <div className="flex justify-center lg:justify-start space-x-6 sm:space-x-8 pt-4">
-                <div className="text-center">
-                  <div
-                    className={`text-2xl sm:text-3xl font-bold ${isDark ? "text-white" : "text-slate-900"
-                      }`}
-                  >
-                    10K+
+                {[
+                  { label: "Candidates", value: "10K+" },
+                  { label: "Companies", value: "500+" },
+                  { label: "Match Rate", value: "95%" },
+                ].map(({ label, value }, idx) => (
+                  <div key={idx} className="text-center">
+                    <div
+                      className={`text-2xl sm:text-3xl font-bold ${theme.text.primary}`}
+                    >
+                      {value}
+                    </div>
+                    <div className={`text-sm font-medium ${theme.text.muted}`}>
+                      {label}
+                    </div>
                   </div>
-                  <div
-                    className={`text-sm font-medium ${isDark ? "text-slate-400" : "text-slate-600"
-                      }`}
-                  >
-                    Candidates
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div
-                    className={`text-2xl sm:text-3xl font-bold ${isDark ? "text-white" : "text-slate-900"
-                      }`}
-                  >
-                    500+
-                  </div>
-                  <div
-                    className={`text-sm font-medium ${isDark ? "text-slate-400" : "text-slate-600"
-                      }`}
-                  >
-                    Companies
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div
-                    className={`text-2xl sm:text-3xl font-bold ${isDark ? "text-white" : "text-slate-900"
-                      }`}
-                  >
-                    95%
-                  </div>
-                  <div
-                    className={`text-sm font-medium ${isDark ? "text-slate-400" : "text-slate-600"
-                      }`}
-                  >
-                    Match Rate
-                  </div>
-                </div>
+                ))}
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4 pt-6 justify-center lg:justify-start">
                 <button
-                  className={`group px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-semibold text-base sm:text-lg transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center space-x-3 ${isDark
-                    ? "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
-                    : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
-                    }`}
+                  className={`group px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-semibold text-base sm:text-lg transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center space-x-3 ${theme.button.primary}`}
                 >
                   <span>Post a Job</span>
                   <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 group-hover:translate-x-1 transition-transform duration-300" />
@@ -623,7 +563,9 @@ export default function HomePage() {
                     }`}
                   style={{ animationDelay: "1s", animationDuration: "4s" }}
                 >
-                  <div className="text-xs sm:text-xs font-semibold">5+ Years</div>
+                  <div className="text-xs sm:text-xs font-semibold">
+                    5+ Years
+                  </div>
                 </div>
 
                 <div
@@ -684,17 +626,15 @@ export default function HomePage() {
         <div className="container mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-16">
           <div className="text-center mb-12 sm:mb-16">
             <div
-              className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full mb-6 ${isDark
-                ? "bg-emerald-900/50 text-emerald-400"
-                : "bg-emerald-100 text-emerald-700"
-                }`}
+              className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full mb-6 ${theme.badge}`}
             >
               <Users className="w-4 h-4" />
-              <span className="text-sm font-semibold">WHY EMPLOYERS LOVE US</span>
+              <span className="text-sm font-semibold">
+                WHY EMPLOYERS LOVE US
+              </span>
             </div>
             <h2
-              className={`text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 ${isDark ? "text-white" : "text-slate-900"
-                }`}
+              className={`text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 ${theme.text.primary}`}
             >
               Everything you need to find
               <br />
@@ -702,12 +642,9 @@ export default function HomePage() {
                 top Indian talent
               </span>
             </h2>
-            <p
-              className={`text-lg max-w-2xl mx-auto ${isDark ? "text-slate-300" : "text-slate-600"
-                }`}
-            >
-              Skip the endless browsing. Our AI does the heavy lifting so you can
-              focus on what matters most.
+            <p className={`text-lg max-w-2xl mx-auto ${theme.text.secondary}`}>
+              Skip the endless browsing. Our AI does the heavy lifting so you
+              can focus on what matters most.
             </p>
           </div>
 
@@ -715,11 +652,10 @@ export default function HomePage() {
             {features.map(({ icon, title, description, border }, index) => (
               <div
                 key={index}
-                className={`group p-6 sm:p-8 rounded-2xl border transition-all duration-300 hover:scale-105
-        ${isDark
-                    ? `bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/80 hover:border-${border}-500/50`
-                    : `bg-white/50 border-white/50 hover:bg-white/80 hover:border-${border}-200`
-                  } backdrop-blur-sm shadow-xl hover:shadow-2xl`}
+                className={`group p-6 sm:p-8 rounded-2xl transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl backdrop-blur-sm ${isDark
+                  ? `bg-slate-800/50 border border-slate-700/50 hover:bg-slate-800/80 hover:border-${border}-500/50`
+                  : `bg-white/50 border border-white/50 hover:bg-white/80 hover:border-${border}-200`
+                  }`}
               >
                 <div
                   className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${isDark ? `bg-${border}-600` : `bg-${border}-500`
@@ -727,15 +663,10 @@ export default function HomePage() {
                 >
                   <div className="text-white text-xl">{icon}</div>
                 </div>
-                <h3
-                  className={`text-xl font-bold mb-3 ${isDark ? "text-white" : "text-slate-900"
-                    }`}
-                >
+                <h3 className={`text-xl font-bold mb-3 ${theme.text.primary}`}>
                   {title}
                 </h3>
-                <p className={`${isDark ? "text-slate-300" : "text-slate-600"}`}>
-                  {description}
-                </p>
+                <p className={`${theme.text.secondary}`}>{description}</p>
               </div>
             ))}
           </div>
@@ -751,8 +682,7 @@ export default function HomePage() {
           <div className="max-w-4xl mx-auto px-6 py-12">
             <div className="text-center">
               <h2
-                className={`text-3xl sm:text-4xl lg:text-5xl font-bold mb-8 sm:mb-12 ${isDark ? "text-white" : "text-slate-900"
-                  }`}
+                className={`text-3xl sm:text-4xl lg:text-5xl font-bold mb-8 sm:mb-12 ${theme.text.primary}`}
               >
                 Ready to find your next
                 <br />
@@ -762,10 +692,7 @@ export default function HomePage() {
               </h2>
 
               <button
-                className={`group px-8 sm:px-12 py-4 sm:py-5 rounded-2xl font-bold text-lg sm:text-xl transition-all duration-300 shadow-2xl hover:shadow-3xl transform hover:scale-105 flex items-center justify-center space-x-3 mx-auto ${isDark
-                  ? "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
-                  : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
-                  }`}
+                className={`group px-8 sm:px-12 py-4 sm:py-5 rounded-2xl font-bold text-lg sm:text-xl transition-all duration-300 shadow-2xl hover:shadow-3xl transform hover:scale-105 flex items-center justify-center space-x-3 mx-auto ${theme.button.primary}`}
               >
                 <div className="w-3 h-3 bg-white rounded-full"></div>
                 <span>Post a Job Now</span>
@@ -781,17 +708,13 @@ export default function HomePage() {
         <div className="container mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-16">
           <div className="text-center mb-12 sm:mb-16">
             <div
-              className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full mb-6 ${isDark
-                ? "bg-emerald-900/50 text-emerald-400"
-                : "bg-emerald-100 text-emerald-700"
-                }`}
+              className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full mb-6 ${theme.badge}`}
             >
               <span className="text-lg">💬</span>
               <span className="text-sm font-semibold">SUCCESS STORIES</span>
             </div>
             <h2
-              className={`text-3xl sm:text-4xl lg:text-5xl font-bold mb-8 ${isDark ? "text-white" : "text-slate-900"
-                }`}
+              className={`text-3xl sm:text-4xl lg:text-5xl font-bold mb-8 ${theme.text.primary}`}
             >
               Trusted by hiring managers
               <br />
@@ -807,13 +730,8 @@ export default function HomePage() {
                 {testimonials.map((item, index) => (
                   <CarouselItem key={index}>
                     <div
-                      className={`group p-6 sm:p-8 rounded-2xl border
-                  ${isDark
-                          ? `bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/80 hover:border-${item.color}-500/50`
-                          : `bg-white/50 border-white/50 hover:bg-white/80 hover:border-${item.color}-200`
-                        } backdrop-blur-sm shadow-xl hover:shadow-2xl relative overflow-hidden`}
+                      className={`group p-6 sm:p-8 rounded-2xl border ${theme.card} hover:border-${item.color}-500/50 hover:bg-${item.color}-900/10 shadow-xl hover:shadow-2xl relative overflow-hidden`}
                     >
-                      {/* Quote icon */}
                       <div
                         className={`absolute top-4 right-4 text-6xl opacity-10 ${isDark
                           ? `text-${item.color}-400`
@@ -825,15 +743,11 @@ export default function HomePage() {
 
                       <div className="relative z-10">
                         <div
-                          className={`text-xl sm:text-2xl font-bold mb-4 ${isDark ? "text-white" : "text-slate-900"
-                            }`}
+                          className={`text-xl sm:text-2xl font-bold mb-4 ${theme.text.primary}`}
                         >
                           {item.quote}
                         </div>
-                        <p
-                          className={`mb-6 ${isDark ? "text-slate-300" : "text-slate-600"
-                            }`}
-                        >
+                        <p className={`mb-6 ${theme.text.secondary}`}>
                           {item.text}
                         </p>
                         <div className="flex items-center space-x-3">
@@ -849,15 +763,11 @@ export default function HomePage() {
                           </div>
                           <div>
                             <div
-                              className={`font-semibold ${isDark ? "text-white" : "text-slate-900"
-                                }`}
+                              className={`font-semibold ${theme.text.primary}`}
                             >
                               {item.name}
                             </div>
-                            <div
-                              className={`text-sm ${isDark ? "text-slate-400" : "text-slate-500"
-                                }`}
-                            >
+                            <div className={`text-sm ${theme.text.muted}`}>
                               {item.role}, {item.company}
                             </div>
                           </div>
@@ -880,47 +790,36 @@ export default function HomePage() {
             <div className="px-4 sm:px-6">
               <div
                 className={`
-        flex flex-wrap justify-center items-center gap-y-6 gap-x-10 sm:gap-x-16 px-6 py-4
-        rounded-2xl border backdrop-blur-sm shadow-xl
-        ${isDark
-                    ? "bg-slate-800/50 border-slate-700/50"
-                    : "bg-white/50 border-white/50"
-                  }
-      `}
+          flex flex-wrap justify-center items-center gap-y-6 gap-x-10 sm:gap-x-16 px-6 py-4
+          rounded-2xl border backdrop-blur-sm shadow-xl
+          ${theme.card}
+        `}
               >
                 {stats.map((stat, index) => (
                   <div
                     key={index}
                     className="flex items-center space-x-4 relative"
                   >
-                    {/* Icon */}
                     <div
                       className={`p-2 rounded-lg ${isDark ? "bg-emerald-600/20" : "bg-emerald-100"
                         }`}
                     >
                       <stat.icon
-                        className={`w-6 h-6 ${isDark ? "text-emerald-400" : "text-emerald-600"
-                          }`}
+                        className={`w-6 h-6 ${theme.accent.emerald}`}
                       />
                     </div>
 
-                    {/* Text */}
                     <div className="min-w-[100px]">
                       <div
-                        className={`text-2xl font-semibold ${isDark ? "text-white" : "text-slate-900"
-                          }`}
+                        className={`text-2xl font-semibold ${theme.text.primary}`}
                       >
                         {stat.value}
                       </div>
-                      <div
-                        className={`text-sm ${isDark ? "text-slate-400" : "text-slate-600"
-                          }`}
-                      >
+                      <div className={`text-sm ${theme.text.muted}`}>
                         {stat.label}
                       </div>
                     </div>
 
-                    {/* Divider for larger screens */}
                     {index < stats.length - 1 && (
                       <div className="hidden sm:block absolute -right-8 top-1/2 transform -translate-y-1/2 h-10 w-px bg-gradient-to-b from-transparent via-slate-400 to-transparent"></div>
                     )}
@@ -933,261 +832,164 @@ export default function HomePage() {
       </section>
 
       {/* Footer Section */}
-      <div
-        className={`transition-all duration-500 relative overflow-hidden ${isDark
-          ? "bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900"
-          : "bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-100"
-          }`}
-      >
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div
-            className={`absolute -top-10 -right-10 w-72 h-72 rounded-full blur-3xl animate-pulse ${isDark
-              ? "bg-gradient-to-br from-emerald-600/10 to-teal-600/10"
-              : "bg-gradient-to-br from-emerald-400/10 to-teal-400/10"
-              }`}
-          ></div>
-          <div
-            className={`absolute bottom-0 -left-20 w-96 h-96 rounded-full blur-3xl animate-pulse delay-1000 ${isDark
-              ? "bg-gradient-to-br from-cyan-600/10 to-emerald-600/10"
-              : "bg-gradient-to-br from-cyan-400/10 to-emerald-400/10"
-              }`}
-          ></div>
-        </div>
+      <footer className="relative z-10">
+        {/* Newsletter Section */}
+        <div
+          className={`border-y ${isDark ? "border-slate-700/50" : "border-slate-200/50"
+            }`}
+        >
+          <div className="container mx-auto px-6 py-12">
+            <div className="max-w-4xl mx-auto text-center">
+              <div
+                className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full mb-6 ${theme.badge}`}
+              >
+                <Mail className="w-4 h-4" />
+                <span className="text-sm font-semibold">STAY UPDATED</span>
+              </div>
 
-        {/* Theme Toggle (positioned at top right) */}
-        <div className="absolute top-6 right-6 z-20">
-          <button
-            onClick={() => setIsDark(!isDark)}
-            className={`p-3 rounded-full transition-all duration-300 ${isDark
-              ? "bg-slate-700 hover:bg-slate-600 text-yellow-400"
-              : "bg-slate-100 hover:bg-slate-200 text-slate-600"
-              }`}
-          >
-            {isDark ? (
-              <Sun className="w-5 h-5" />
-            ) : (
-              <Moon className="w-5 h-5" />
-            )}
-          </button>
-        </div>
+              <h3
+                className={`text-2xl sm:text-3xl font-bold mb-4 ${theme.text.primary}`}
+              >
+                Get the latest hiring insights and
+                <br />
+                <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
+                  candidate updates
+                </span>
+              </h3>
 
-        <footer className="relative z-10">
-          {/* Newsletter Section */}
-          <div
-            className={`border-b ${isDark ? "border-slate-700/50" : "border-slate-200/50"
-              }`}
-          >
-            <div className="container mx-auto px-6 py-12">
-              <div className="max-w-4xl mx-auto text-center">
-                <div
-                  className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full mb-6 ${isDark
-                    ? "bg-emerald-900/50 text-emerald-400"
-                    : "bg-emerald-100 text-emerald-700"
-                    }`}
+              <p className={`text-lg mb-8 ${theme.text.secondary}`}>
+                Join 500+ hiring managers who get weekly insights on Indian tech
+                talent
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  className={`flex-1 px-6 py-4 rounded-2xl border transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 ${theme.input} backdrop-blur-sm`}
+                />
+                <button
+                  className={`px-6 py-4 rounded-2xl font-semibold transition-all duration-300 flex items-center justify-center space-x-2 ${theme.button.primary} shadow-xl hover:shadow-2xl transform hover:scale-105`}
                 >
-                  <Mail className="w-4 h-4" />
-                  <span className="text-sm font-semibold">STAY UPDATED</span>
-                </div>
-
-                <h3
-                  className={`text-2xl sm:text-3xl font-bold mb-4 ${isDark ? "text-white" : "text-slate-900"
-                    }`}
-                >
-                  Get the latest hiring insights and
-                  <br />
-                  <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
-                    candidate updates
-                  </span>
-                </h3>
-
-                <p
-                  className={`text-lg mb-8 ${isDark ? "text-slate-300" : "text-slate-600"
-                    }`}
-                >
-                  Join 500+ hiring managers who get weekly insights on Indian
-                  tech talent
-                </p>
-
-                <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-                  <input
-                    type="email"
-                    placeholder="Enter your email"
-                    className={`flex-1 px-6 py-4 rounded-2xl border transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 ${isDark
-                      ? "bg-slate-800/50 border-slate-700/50 text-white placeholder-slate-400 focus:bg-slate-800/80"
-                      : "bg-white/50 border-white/50 text-slate-900 placeholder-slate-500 focus:bg-white/80"
-                      } backdrop-blur-sm`}
-                  />
-                  <button
-                    className={`px-6 py-4 rounded-2xl font-semibold transition-all duration-300 flex items-center justify-center space-x-2 ${isDark
-                      ? "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
-                      : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
-                      } shadow-xl hover:shadow-2xl transform hover:scale-105`}
-                  >
-                    <span>Subscribe</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
+                  <span>Subscribe</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Main Footer Content */}
-          <div className="container mx-auto px-6 py-16">
-            <div className="grid lg:grid-cols-6 gap-8">
-              {/* Brand Section */}
-              <div className="lg:col-span-2 space-y-6">
-                <div>
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div
-                      className={`p-2 rounded-xl ${isDark
-                        ? "bg-gradient-to-br from-emerald-600 to-teal-700"
-                        : "bg-gradient-to-br from-emerald-500 to-teal-600"
-                        }`}
-                    >
-                      <MapPin className="w-6 h-6 text-white" />
-                    </div>
-                    <span
-                      className={`text-2xl font-bold ${isDark ? "text-white" : "text-slate-900"
-                        }`}
-                    >
-                      Opportune
-                    </span>
+        {/* Main Footer Content */}
+        <div className="container mx-auto px-6 py-16">
+          <div className="grid lg:grid-cols-6 gap-8">
+            {/* Brand Section */}
+            <div className="lg:col-span-2 space-y-6">
+              <div>
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700">
+                    <MapPin className="w-6 h-6 text-white" />
                   </div>
-                  <p
-                    className={`text-lg mb-6 ${isDark ? "text-slate-300" : "text-slate-600"
-                      }`}
-                  >
-                    Connecting Indian tech talent with global opportunities
-                    through AI-powered matching.
-                  </p>
+                  <span className={`text-2xl font-bold ${theme.text.primary}`}>
+                    Opportune
+                  </span>
                 </div>
+                <p className={`text-lg mb-6 ${theme.text.secondary}`}>
+                  Connecting Indian tech talent with global opportunities
+                  through AI-powered matching.
+                </p>
+              </div>
 
-                {/* Contact Info */}
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <Mail
-                      className={`w-5 h-5 ${isDark ? "text-emerald-400" : "text-emerald-600"
-                        }`}
-                    />
-                    <span
-                      className={isDark ? "text-slate-300" : "text-slate-600"}
-                    >
-                      hello@Opportune.com
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Phone
-                      className={`w-5 h-5 ${isDark ? "text-emerald-400" : "text-emerald-600"
-                        }`}
-                    />
-                    <span
-                      className={isDark ? "text-slate-300" : "text-slate-600"}
-                    >
-                      +91 98765 43210
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <MapPin
-                      className={`w-5 h-5 ${isDark ? "text-emerald-400" : "text-emerald-600"
-                        }`}
-                    />
-                    <span
-                      className={isDark ? "text-slate-300" : "text-slate-600"}
-                    >
-                      Gurugram, Haryana, India
-                    </span>
-                  </div>
+              {/* Contact Info */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <Mail className={`w-5 h-5 ${theme.accent.emerald}`} />
+                  <span className={theme.text.secondary}>
+                    hello@Opportune.com
+                  </span>
                 </div>
-
-                {/* Social Links */}
-                <div className="flex space-x-4">
-                  {socialLinks.map((social, index) => (
-                    <a
-                      key={index}
-                      href={social.href}
-                      className={`p-3 rounded-xl transition-all duration-300 ${isDark
-                        ? "bg-slate-800/50 hover:bg-slate-700/50 text-slate-400"
-                        : "bg-white/50 hover:bg-white/80 text-slate-600"
-                        } backdrop-blur-sm border ${isDark ? "border-slate-700/50" : "border-white/50"
-                        } hover:scale-110 ${social.color}`}
-                    >
-                      <social.icon className="w-5 h-5" />
-                    </a>
-                  ))}
+                <div className="flex items-center space-x-3">
+                  <Phone className={`w-5 h-5 ${theme.accent.emerald}`} />
+                  <span className={theme.text.secondary}>+91 98765 43210</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <MapPin className={`w-5 h-5 ${theme.accent.emerald}`} />
+                  <span className={theme.text.secondary}>
+                    Gurugram, Haryana, India
+                  </span>
                 </div>
               </div>
 
-              {/* Links Sections */}
-              <div className="lg:col-span-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                {Object.entries(footerLinks).map(([category, links]) => (
-                  <div key={category}>
-                    <h4
-                      className={`text-lg font-semibold mb-6 capitalize ${isDark ? "text-white" : "text-slate-900"
-                        }`}
-                    >
-                      {category}
-                    </h4>
-                    <ul className="space-y-3">
-                      {links.map((link, index) => (
-                        <li key={index}>
-                          <a
-                            href={link.href}
-                            className={`transition-all duration-300 hover:translate-x-1 ${isDark
-                              ? "text-slate-300 hover:text-emerald-400"
-                              : "text-slate-600 hover:text-emerald-600"
-                              }`}
-                          >
-                            {link.name}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+              {/* Social Links */}
+              <div className="flex space-x-4">
+                {socialLinks.map((social, index) => (
+                  <a
+                    key={index}
+                    href={social.href}
+                    className={`p-3 rounded-xl transition-all duration-300 ${theme.card} backdrop-blur-sm hover:scale-110 ${social.color}`}
+                  >
+                    <social.icon className="w-5 h-5" />
+                  </a>
                 ))}
               </div>
             </div>
+
+            {/* Links Sections */}
+            <div className="lg:col-span-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {Object.entries(footerLinks).map(([category, links]) => (
+                <div key={category}>
+                  <h4
+                    className={`text-lg font-semibold mb-6 capitalize ${theme.text.primary}`}
+                  >
+                    {category}
+                  </h4>
+                  <ul className="space-y-3">
+                    {links.map((link, index) => (
+                      <li key={index}>
+                        <a
+                          href={link.href}
+                          className={`transition-all duration-300 hover:translate-x-1 ${theme.text.secondary} hover:${theme.accent.emerald}`}
+                        >
+                          {link.name}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
           </div>
+        </div>
 
-          {/* Bottom Bar */}
-          <div
-            className={`border-t ${isDark ? "border-slate-700/50" : "border-slate-200/50"
-              }`}
-          >
-            <div className="container mx-auto px-6 py-6">
-              <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-                <div
-                  className={`flex items-center space-x-2 text-sm ${isDark ? "text-slate-400" : "text-slate-600"
-                    }`}
-                >
-                  <span>© 2025 Opportune. Made with</span>
-                  <Heart className="w-4 h-4 text-red-500 animate-pulse" />
-                  <span>in India</span>
-                </div>
+        {/* Bottom Bar */}
+        <div
+          className={`border-t ${isDark ? "border-slate-700/50" : "border-slate-200/50"
+            }`}
+        >
+          <div className="container mx-auto px-6 py-6">
+            <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+              <div
+                className={`flex items-center space-x-2 text-sm ${theme.text.muted}`}
+              >
+                <span>© 2025 Opportune. Made with</span>
+                <Heart className="w-4 h-4 text-red-500 animate-pulse" />
+                <span>in India</span>
+              </div>
 
-                <div className="flex items-center space-x-6">
-                  <span
-                    className={`text-sm ${isDark ? "text-slate-400" : "text-slate-600"
-                      }`}
-                  >
-                    🌟 Trusted by 500+ companies
-                  </span>
-                  <div
-                    className={`w-px h-4 ${isDark ? "bg-slate-700" : "bg-slate-300"
-                      }`}
-                  ></div>
-                  <span
-                    className={`text-sm ${isDark ? "text-slate-400" : "text-slate-600"
-                      }`}
-                  >
-                    ⚡ 10K+ successful hires
-                  </span>
-                </div>
+              <div className="flex items-center space-x-6">
+                <span className={`flex items-center gap-1 text-sm ${theme.text.muted}`}>
+                  <Star className="w-4 h-4" />
+                  Trusted by 500+ companies
+                </span>
+                <div className={`w-px h-4 ${isDark ? "bg-slate-700" : "bg-slate-300"}`} />
+                <span className={`flex items-center gap-1 text-sm ${theme.text.muted}`}>
+                  <Zap className="w-4 h-4" />
+                  10K+ successful hires
+                </span>
               </div>
             </div>
           </div>
-        </footer>
-      </div>
+        </div>
+      </footer>
     </div>
   );
 }
