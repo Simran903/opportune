@@ -38,7 +38,7 @@ const navItems = [
   { name: "Home", href: "#home", external: false },
   { name: "Features", href: "#features", external: false },
   { name: "Testimonials", href: "#testimonials", external: false },
-  { name: "Post Job", href: "/signup", external: true },
+  { name: "Post Job", href: "/auth/signup", external: true },
 ];
 
 const features = [
@@ -136,7 +136,7 @@ const testimonials = [
 
 const footerLinks = {
   product: [
-    { name: "Post a Job", href: "#" },
+    { name: "Post a Job", href: "/auth/signup" },
     { name: "Browse Candidates", href: "#" },
     { name: "Dashboard", href: "#" },
     { name: "Analytics", href: "#" },
@@ -229,9 +229,11 @@ export default function HomePage() {
                 ))}
               </NavigationMenuList>
             </NavigationMenu>
-
             {/* Theme Toggle */}
-            <ThemeToggleButton />
+            <div className="px-2">
+              <ThemeToggleButton />
+            </div>
+
           </div>
         </div>
       </div>
@@ -304,12 +306,14 @@ export default function HomePage() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4 pt-6 justify-center lg:justify-start">
-                <button
-                  className={`group px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-semibold text-base sm:text-lg transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center space-x-3 ${theme.button.primary}`}
-                >
-                  <span>Post a Job</span>
-                  <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 group-hover:translate-x-1 transition-transform duration-300" />
-                </button>
+                <Link href="/auth/signup">
+                  <button
+                    className={`group px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-semibold text-base sm:text-lg transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center justify-center space-x-3 ${theme.button.primary}`}
+                  >
+                    <span>Post a Job</span>
+                    <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                  </button>
+                </Link>
               </div>
             </div>
 
@@ -691,13 +695,15 @@ export default function HomePage() {
                 </span>
               </h2>
 
-              <button
-                className={`group px-8 sm:px-12 py-4 sm:py-5 rounded-2xl font-bold text-lg sm:text-xl transition-all duration-300 shadow-2xl hover:shadow-3xl transform hover:scale-105 flex items-center justify-center space-x-3 mx-auto ${theme.button.primary}`}
-              >
-                <div className="w-3 h-3 bg-white rounded-full"></div>
-                <span>Post a Job Now</span>
-                <ArrowRight className="w-5 sm:w-6 h-5 sm:h-6 group-hover:translate-x-1 transition-transform duration-300" />
-              </button>
+              <Link href="/auth/signup">
+                <button
+                  className={`group px-8 sm:px-12 py-4 sm:py-5 rounded-2xl font-bold text-lg sm:text-xl transition-all duration-300 shadow-2xl hover:shadow-3xl transform hover:scale-105 flex items-center justify-center space-x-3 mx-auto ${theme.button.primary}`}
+                >
+                  <div className="w-3 h-3 bg-white rounded-full"></div>
+                  <span>Post a Job Now</span>
+                  <ArrowRight className="w-5 sm:w-6 h-5 sm:h-6 group-hover:translate-x-1 transition-transform duration-300" />
+                </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -925,12 +931,19 @@ export default function HomePage() {
                   <a
                     key={index}
                     href={social.href}
-                    className={`p-3 rounded-xl transition-all duration-300 ${theme.card} backdrop-blur-sm hover:scale-110 ${social.color}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`p-3 rounded-xl transition-all duration-300 backdrop-blur-sm hover:scale-110
+        ${isDark
+                        ? `bg-slate-800/60 text-white hover:bg-slate-700 ${social.color}`
+                        : `bg-white/80 text-slate-800 hover:bg-slate-100 ${social.color}`
+                      } shadow-md`}
                   >
                     <social.icon className="w-5 h-5" />
                   </a>
                 ))}
               </div>
+
             </div>
 
             {/* Links Sections */}
