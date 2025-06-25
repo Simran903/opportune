@@ -187,8 +187,7 @@ export default function HomePage() {
 
   return (
     <div
-      className={`min-h-screen transition-all duration-500 relative overflow-hidden ${theme.background}`}
-    >
+      className={`min-h-screen transition-all duration-500 relative overflow-hidden ${theme.background}`}>
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         {getAnimatedBg().map((className, index) => (
