@@ -11,17 +11,14 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const [isClient, setIsClient] = useState(false);
   const theme = getThemeClasses;
 
-  // Ensure client-side rendering for theme consistency
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Don't render animated backgrounds until client-side
   const animatedBgClasses = isClient ? getAnimatedBg() : [];
 
   return (
     <div className={`min-h-screen transition-colors duration-300 relative ${theme.background}`}>
-      {/* Single animated background instance - only in layout */}
       {isClient && (
         <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
           {animatedBgClasses.map((className, index) => (
@@ -30,22 +27,19 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      {/* Sidebar - no animated background here */}
       <Sidebar />
-      
-      {/* Main content that responds to sidebar state */}
-      <main 
+
+      <main
         className={`
           min-h-screen transition-all duration-300 ease-in-out relative z-10
           pt-16 md:pt-0
-          ${isCollapsed 
-            ? 'md:ml-16' // Collapsed sidebar width (64px)
-            : 'md:ml-64' // Expanded sidebar width (256px)
+          ${isCollapsed
+            ? 'md:ml-16'
+            : 'md:ml-64'
           }
         `}
       >
         <div className="p-6 w-full h-full">
-          {/* Content wrapper with theme background */}
           <div className={`min-h-full transition-colors duration-300`}>
             {children}
           </div>

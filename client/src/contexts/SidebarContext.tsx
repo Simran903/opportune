@@ -20,18 +20,15 @@ export const SidebarProvider = ({
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
-  // Initialize client-side rendering and load persisted state
   useEffect(() => {
     setIsClient(true);
 
-    // Load sidebar state from localStorage
     const savedCollapsed = localStorage.getItem("opportune-sidebar-collapsed");
     if (savedCollapsed !== null) {
       setIsCollapsed(savedCollapsed === "true");
     }
   }, []);
 
-  // Save sidebar state to localStorage when it changes
   useEffect(() => {
     if (isClient) {
       localStorage.setItem(
