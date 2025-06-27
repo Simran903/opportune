@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext, useContext } from "react";
 
 // Theme Context
 type ThemeClasses = ReturnType<typeof getThemeClasses>;
@@ -9,7 +9,7 @@ interface ThemeContextType {
   toggleTheme: () => void;
   getThemeClasses: ThemeClasses;
   getAnimatedBg: () => string[];
-  theme: 'dark' | 'light';
+  theme: "dark" | "light";
 }
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
@@ -38,7 +38,8 @@ export const getThemeClasses = (isDark: boolean) => ({
     muted: isDark ? "text-slate-400" : "text-slate-500",
   },
   button: {
-    primary: "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white",
+    primary:
+      "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white",
     secondary: isDark
       ? "bg-slate-700 hover:bg-slate-600 text-white"
       : "bg-slate-100 hover:bg-slate-200 text-slate-900",
@@ -59,40 +60,80 @@ export const getThemeClasses = (isDark: boolean) => ({
     : "bg-emerald-100 text-emerald-700",
 });
 
+// Get initial theme state
+const getInitialTheme = (): boolean => {
+  if (typeof window === "undefined") return true; // Default to dark for SSR
+
+  try {
+    const savedTheme = localStorage.getItem("opportune-theme");
+    if (savedTheme !== null) {
+      return savedTheme === "dark";
+    }
+
+    // Use system preference as fallback
+    if (window.matchMedia) {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    }
+  } catch (e) {
+    console.warn("Failed to get theme from localStorage:", e);
+  }
+
+  return true; // Default to dark
+};
+
 interface ThemeProviderProps {
   children: React.ReactNode;
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [isDark, setIsDark] = useState<boolean>(true);
+  const [isDark, setIsDark] = useState<boolean>(getInitialTheme);
+  const [isClient, setIsClient] = useState(false);
 
+  // Set theme class immediately on mount to prevent flashing
   useEffect(() => {
-    const saved = localStorage.getItem("theme");
-    if (saved) {
-      setIsDark(JSON.parse(saved));
-    }
+    document.documentElement.classList.toggle("dark", isDark);
   }, []);
 
+  // Initialize client-side rendering
   useEffect(() => {
-    localStorage.setItem("theme", JSON.stringify(isDark));
-  }, [isDark]);
+    setIsClient(true);
+  }, []);
 
-  const toggleTheme = () => setIsDark(prev => !prev);
+  // Apply theme to document and save to localStorage
+  useEffect(() => {
+    if (isClient) {
+      document.documentElement.classList.toggle("dark", isDark);
+      try {
+        localStorage.setItem("opportune-theme", isDark ? "dark" : "light");
+      } catch (e) {
+        console.warn("Failed to save theme to localStorage:", e);
+      }
+    }
+  }, [isDark, isClient]);
 
-  const getAnimatedBg = (): string[] => [
-    `absolute -top-10 -right-10 w-48 sm:w-72 h-48 sm:h-72 rounded-full blur-3xl animate-pulse ${isDark
-      ? "bg-gradient-to-br from-emerald-600/20 to-teal-600/20"
-      : "bg-gradient-to-br from-emerald-400/20 to-teal-400/20"
-    }`,
-    `absolute top-1/2 -left-10 sm:-left-20 w-64 sm:w-96 h-64 sm:h-96 rounded-full blur-3xl animate-pulse delay-1000 ${isDark
-      ? "bg-gradient-to-br from-cyan-600/15 to-emerald-600/15"
-      : "bg-gradient-to-br from-cyan-400/15 to-emerald-400/15"
-    }`,
-    `absolute bottom-10 right-1/4 sm:right-1/3 w-48 sm:w-64 h-48 sm:h-64 rounded-full blur-3xl animate-pulse delay-2000 ${isDark
-      ? "bg-gradient-to-br from-teal-600/20 to-cyan-600/20"
-      : "bg-gradient-to-br from-teal-400/20 to-cyan-400/20"
-    }`
-  ];
+  const toggleTheme = () => setIsDark((prev) => !prev);
+
+  const getAnimatedBg = (): string[] => {
+    if (!isClient) return [];
+
+    return [
+      `absolute -top-10 -right-10 w-48 sm:w-72 h-48 sm:h-72 rounded-full blur-3xl animate-pulse ${
+        isDark
+          ? "bg-gradient-to-br from-emerald-600/20 to-teal-600/20"
+          : "bg-gradient-to-br from-emerald-400/20 to-teal-400/20"
+      }`,
+      `absolute top-1/2 -left-10 sm:-left-20 w-64 sm:w-96 h-64 sm:h-96 rounded-full blur-3xl animate-pulse delay-1000 ${
+        isDark
+          ? "bg-gradient-to-br from-cyan-600/15 to-emerald-600/15"
+          : "bg-gradient-to-br from-cyan-400/15 to-emerald-400/15"
+      }`,
+      `absolute bottom-10 right-1/4 sm:right-1/3 w-48 sm:w-64 h-48 sm:h-64 rounded-full blur-3xl animate-pulse delay-2000 ${
+        isDark
+          ? "bg-gradient-to-br from-teal-600/20 to-cyan-600/20"
+          : "bg-gradient-to-br from-teal-400/20 to-cyan-400/20"
+      }`,
+    ];
+  };
 
   const value: ThemeContextType = {
     isDark,
@@ -103,8 +144,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   };
 
   return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
 };

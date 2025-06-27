@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Home,
   Briefcase,
@@ -10,15 +12,17 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useSidebar } from "@/contexts/SidebarContext";
 import { ThemeToggleButton } from "./ThemeToggleButton";
 
-const OpportuneSidebar = () => {
-  const { isDark, getThemeClasses, getAnimatedBg } = useTheme();
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+export const Sidebar = () => {
+  const { isDark, getThemeClasses } = useTheme();
+  const { isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen } =
+    useSidebar();
+  const pathname = usePathname();
 
-  const toggleCollapse = () => setIsCollapsed((prev) => !prev);
-  const toggleMobile = () => setIsMobileOpen((prev) => !prev);
+  const toggleCollapse = () => setIsCollapsed(!isCollapsed);
+  const toggleMobile = () => setIsMobileOpen(!isMobileOpen);
 
   const menuItems = [
     { title: "Dashboard", icon: Home, url: "/dashboard" },
@@ -26,16 +30,9 @@ const OpportuneSidebar = () => {
     { title: "Manage Jobs", icon: Briefcase, url: "/jobs" },
   ];
 
-  const animatedBgClasses = getAnimatedBg();
-
   return (
-    <div
-      className={`min-h-screen ${getThemeClasses.background} relative overflow-hidden`}
-    >
-      <div className={animatedBgClasses[0]} />
-      <div className={animatedBgClasses[1]} />
-      <div className={animatedBgClasses[2]} />
-
+    <>
+      {/* Mobile menu button */}
       <button
         onClick={toggleMobile}
         className={`md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg ${getThemeClasses.nav} backdrop-blur-xl ${getThemeClasses.button.ghost} transition-all duration-300`}
@@ -47,6 +44,7 @@ const OpportuneSidebar = () => {
         )}
       </button>
 
+      {/* Mobile overlay */}
       {isMobileOpen && (
         <div
           className="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
@@ -54,23 +52,27 @@ const OpportuneSidebar = () => {
         />
       )}
 
+      {/* Sidebar - removed animated background to prevent conflicts */}
       <div
         className={`
           fixed inset-y-0 left-0 z-50 
           ${isCollapsed ? "w-16" : "w-64"} 
-          ${isMobileOpen
-            ? "translate-x-0"
-            : "-translate-x-full md:translate-x-0"
+          ${
+            isMobileOpen
+              ? "translate-x-0"
+              : "-translate-x-full md:translate-x-0"
           }
           transition-all duration-300 ease-in-out
           ${getThemeClasses.nav} backdrop-blur-xl border-r border-slate-700/50
           flex flex-col justify-between
         `}
       >
-        <div>
+        <div className="relative z-10">
+          {/* Header */}
           <div
-            className={`relative flex items-center ${isCollapsed ? "pl-4" : "pl-6"
-              } p-4 border-b border-slate-700/50 h-16`}
+            className={`relative flex items-center ${
+              isCollapsed ? "pl-4" : "pl-6"
+            } p-4 border-b border-slate-700/50 h-16`}
           >
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-400 flex items-center justify-center flex-shrink-0">
@@ -83,6 +85,7 @@ const OpportuneSidebar = () => {
               )}
             </div>
 
+            {/* Collapse button - only show on desktop */}
             <button
               onClick={toggleCollapse}
               className={`
@@ -103,56 +106,87 @@ const OpportuneSidebar = () => {
             </button>
           </div>
 
+          {/* Navigation */}
           <nav
             className={`flex-1 py-2 space-y-1 ${isCollapsed ? "px-2" : "px-4"}`}
           >
-            {menuItems.map((item, index) => (
-              <div key={index} className="relative group">
-                <a
-                  href={item.url}
-                  className={`
-                    flex items-center rounded-lg
-                    ${isCollapsed
-                      ? "justify-center p-3"
-                      : "space-x-3 px-3 py-2.5"
-                    }
-                    ${getThemeClasses.button.ghost
-                    } hover:bg-slate-100 dark:hover:bg-slate-700
-                    relative overflow-hidden
-                    transition-all duration-200
-                  `}
-                >
-                  <div className="relative">
-                    <item.icon
-                      className={`w-5 h-5 ${getThemeClasses.accent.emerald} transition-colors duration-200`}
-                    />
-                  </div>
+            {menuItems.map((item, index) => {
+              const isActive = pathname === item.url;
+              return (
+                <div key={index} className="relative group">
+                  <Link
+                    href={item.url}
+                    className={`
+                      flex items-center rounded-lg
+                      ${
+                        isCollapsed
+                          ? "justify-center p-3"
+                          : "space-x-3 px-3 py-2.5"
+                      }
+                      ${
+                        isActive
+                          ? "bg-emerald-600/20 text-emerald-400 border border-emerald-500/30"
+                          : getThemeClasses.button.ghost
+                      }
+                      hover:bg-slate-100 dark:hover:bg-slate-700
+                      relative overflow-hidden
+                      transition-all duration-200
+                    `}
+                    onClick={() => {
+                      // Close mobile menu on navigation
+                      setIsMobileOpen(false);
+                    }}
+                  >
+                    <div className="relative">
+                      <item.icon
+                        className={`w-5 h-5 ${
+                          isActive
+                            ? "text-emerald-400"
+                            : getThemeClasses.accent.emerald
+                        } transition-colors duration-200`}
+                      />
+                    </div>
 
-                  {!isCollapsed && (
-                    <span
-                      className={`${getThemeClasses.text.secondary
+                    {!isCollapsed && (
+                      <span
+                        className={`${
+                          isActive
+                            ? "text-emerald-400 font-medium"
+                            : getThemeClasses.text.secondary
                         } group-hover:${getThemeClasses.text.primary.replace(
                           "text-",
                           "text-"
                         )} transition-colors duration-200 flex-1`}
-                    >
-                      {item.title}
-                    </span>
-                  )}
-                </a>
-              </div>
-            ))}
+                      >
+                        {item.title}
+                      </span>
+                    )}
+
+                    {/* Tooltip for collapsed state */}
+                    {isCollapsed && (
+                      <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                        {item.title}
+                      </div>
+                    )}
+                  </Link>
+                </div>
+              );
+            })}
           </nav>
         </div>
 
+        {/* Footer */}
         <div
-          className={`border-t border-slate-700/50 ${isCollapsed ? "p-2" : "p-4"
-            }`}
+          className={`border-t border-slate-700/50 ${
+            isCollapsed ? "p-2" : "p-4"
+          } relative z-10`}
         >
-          <div className="relative group">
+          {/* Theme toggle */}
+          <div className="relative group mb-2">
             <div
-              className={`w-full flex items-center ${isCollapsed ? "pl-0" : "pl-2"
-                }`}
+              className={`w-full flex items-center ${
+                isCollapsed ? "pl-0" : "pl-2"
+              }`}
             >
               <ThemeToggleButton className="border-none shadow-none" />
               {!isCollapsed && (
@@ -168,10 +202,12 @@ const OpportuneSidebar = () => {
             )}
           </div>
 
+          {/* User profile */}
           <div className="relative group">
             <div
-              className={`flex items-center rounded-lg cursor-pointer transition-all duration-200 ${isCollapsed ? "justify-center p-3" : "space-x-3 px-3 py-2.5"
-                } ${getThemeClasses.button.ghost}`}
+              className={`flex items-center rounded-lg cursor-pointer transition-all duration-200 ${
+                isCollapsed ? "justify-center p-3" : "space-x-3 px-3 py-2.5"
+              } ${getThemeClasses.button.ghost}`}
             >
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-400 flex items-center justify-center flex-shrink-0">
                 <User2 className="w-4 h-4 text-white" />
@@ -201,8 +237,6 @@ const OpportuneSidebar = () => {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
-
-export default OpportuneSidebar;
