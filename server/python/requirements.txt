@@ -3,3 +3,5 @@ selenium
 scikit-learn
 transformers
 sentence-transformers
+fastapi
+uvicorn

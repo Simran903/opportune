@@ -1,9 +1,6 @@
 import { z } from "zod";
 import prisma from "../config/client";
-import { exec } from "child_process";
-import { promisify } from "util";
-
-const execAsync = promisify(exec);
+import axios from "axios";
 
 const jobSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -36,10 +33,12 @@ export const addJob = async (req, res) => {
       },
     });
 
-    const command = `echo "${description}" | ./python/run_scraper.sh`;
-    const { stdout } = await execAsync(command, { maxBuffer: 1024 * 1000 });
+    // ✅ Call Python scraper API using axios
+    const { data } = await axios.post("http://localhost:8000/scrape", {
+      description,
+    });
 
-    const candidates = JSON.parse(stdout);
+    const candidates = data.profiles || [];
 
     for (const candidate of candidates) {
       await prisma.candidate.create({
@@ -56,7 +55,7 @@ export const addJob = async (req, res) => {
       candidates,
     });
   } catch (error) {
-    console.error("Error in addJob:", error);
+    console.error("Error in addJob:", error?.response?.data || error.message);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
