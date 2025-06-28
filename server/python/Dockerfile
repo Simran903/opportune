@@ -22,24 +22,20 @@ RUN apt-get update && apt-get install -y \
     libxcomposite1 \
     libxdamage1 \
     libxrandr2 \
-    xdg-utils
+    xdg-utils \
+    && ln -s /usr/bin/chromium /usr/bin/google-chrome
 
-# Set Chrome paths
-ENV CHROME_BIN=/usr/bin/chromium
+# Set Chrome ENV paths
+ENV CHROME_BIN=/usr/bin/google-chrome
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
-# Create app directory
 WORKDIR /app
 
-# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy code
 COPY . .
 
-# Expose FastAPI port
 EXPOSE 10000
 
-# Run app
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "10000"]
