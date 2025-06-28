@@ -1,13 +1,9 @@
 FROM python:3.10-slim
 
-# Install Chrome and dependencies
+# Install Chrome + dependencies
 RUN apt-get update && apt-get install -y \
-    chromium-driver \
     chromium \
-    wget \
-    curl \
-    unzip \
-    gnupg \
+    chromium-driver \
     fonts-liberation \
     libappindicator3-1 \
     libasound2 \
@@ -23,9 +19,9 @@ RUN apt-get update && apt-get install -y \
     libxdamage1 \
     libxrandr2 \
     xdg-utils \
+    curl unzip wget gnupg \
     && ln -s /usr/bin/chromium /usr/bin/google-chrome
 
-# Set Chrome ENV paths
 ENV CHROME_BIN=/usr/bin/google-chrome
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
