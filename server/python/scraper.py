@@ -32,40 +32,7 @@ def clean_link(url):
     return url.split("?")[0].split("&")[0]
 
 def fetch_profiles(description):
-    keywords = extract_keywords(description)
-    driver = init_driver()
-    results = []
-
-    fallback_keywords = {
-        "rxjs": "angular",
-        "ngrx": "angular",
-        "typescript": "frontend",
-        "javascript": "frontend",
-    }
-
-    for keyword in keywords:
-        search_keyword = fallback_keywords.get(keyword, keyword)
-        query = f'site:linkedin.com/in "{search_keyword} developer" India'
-        search_url = f"https://www.google.com/search?q={query}"
-
-        try:
-            driver.get(search_url)
-            time.sleep(7)  # Let the page load
-
-            links = driver.find_elements(By.CSS_SELECTOR, "a")
-            found = 0
-            for link in links:
-                href = link.get_attribute("href")
-                if is_linkedin_profile_url(href) and href not in [r["profileUrl"] for r in results]:
-                    results.append({"profileUrl": clean_link(href)})
-                    found += 1
-                    if found >= 2:
-                        break
-        except:
-            time.sleep(2)
-
-        if len(results) >= 5:
-            break
-
-    driver.quit()
-    return results[:5]
+    return [
+        {"profileUrl": "https://linkedin.com/in/test-user-1"},
+        {"profileUrl": "https://linkedin.com/in/test-user-2"}
+    ]

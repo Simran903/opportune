@@ -1,5 +1,4 @@
-# app.py
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from pydantic import BaseModel
 from scraper import fetch_profiles
 
@@ -8,10 +7,17 @@ app = FastAPI()
 class Job(BaseModel):
     description: str
 
+@app.get("/")
+def root():
+    return {"message": "Python scraper is live"}
+
 @app.post("/scrape")
-async def scrape(job: Job):
+def scrape(job: Job):
     try:
-        results = fetch_profiles(job.description)
-        return { "profiles": results }
+        print("🔍 Received request with description:", job.description)
+        profiles = fetch_profiles(job.description)
+        print("✅ Profiles extracted:", profiles)
+        return {"profiles": profiles}
     except Exception as e:
-        return { "error": str(e) }
+        print("❌ ERROR during scraping:", str(e))
+        return {"error": str(e)}
