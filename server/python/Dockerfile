@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-# Install system dependencies
+# 1. Install system dependencies
 RUN apt-get update && apt-get install -y \
     wget curl unzip gnupg ca-certificates fonts-liberation \
     libappindicator3-1 libasound2 libatk-bridge2.0-0 \
@@ -9,29 +9,26 @@ RUN apt-get update && apt-get install -y \
     libxrandr2 libxss1 xdg-utils libglib2.0-0 libpango-1.0-0 \
     libpangocairo-1.0-0 libx11-6
 
-# Install a specific version of Google Chrome
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" \
-    > /etc/apt/sources.list.d/google-chrome.list && \
-    apt-get update && apt-get install -y google-chrome-stable
+# 2. Install specific version of Google Chrome (v114)
+RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
+    dpkg -i google-chrome-stable_current_amd64.deb || apt-get -fy install && \
+    rm google-chrome-stable_current_amd64.deb
 
-# Install Chromedriver manually for Chrome 114
+# 3. Install compatible Chromedriver manually
 ENV CHROMEDRIVER_VERSION=114.0.5735.90
-
 RUN wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip && \
     unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
     rm /tmp/chromedriver.zip && \
     chmod +x /usr/local/bin/chromedriver
 
-# Chrome & Chromedriver ENV
+# 4. Set environment variables
 ENV CHROME_BIN=/usr/bin/google-chrome
 ENV CHROMEDRIVER_PATH=/usr/local/bin/chromedriver
 
+# 5. Set up app
 WORKDIR /app
-
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
 COPY . .
 
 EXPOSE 10000
