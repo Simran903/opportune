@@ -33,7 +33,7 @@ export const addJob = async (req, res) => {
       },
     });
 
-    // ✅ Call Python scraper API using axios
+    // Python scraper API using axios
     const { data } = await axios.post("http://localhost:8000/scrape", {
       description,
     });
