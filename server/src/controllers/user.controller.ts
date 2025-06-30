@@ -61,8 +61,11 @@ export const signUp = async (req, res) => {
       data: { name, email, password: hashpassword },
     });
 
+    const accesstoken = generateAccessToken(newUser);
+
     res.status(201).json({
       message: "User created successfully.",
+      accesstoken,
       user: {
         id: newUser.id,
         name: newUser.name,
@@ -155,7 +158,7 @@ export const updatePassword = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const isMatch = bcrypt.compare(currentPassword, user.password);
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       return res.status(401).json({ error: "Current password is incorrect" });
     }
@@ -164,7 +167,7 @@ export const updatePassword = async (req, res) => {
 
     await prisma.user.update({
       where: { id: userId },
-      data: { password: newPassword }
+      data: { password: hashedNewPassword }
     })
 
     return res.status(200).json({ message: "Password updated successfully" });
