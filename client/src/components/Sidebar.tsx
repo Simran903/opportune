@@ -27,7 +27,6 @@ export const Sidebar = () => {
   const menuItems = [
     { title: "Dashboard", icon: Home, url: "/dashboard" },
     { title: "Post a Job", icon: PlusSquare, url: "/post-job" },
-    { title: "Manage Jobs", icon: Briefcase, url: "/jobs" },
   ];
 
   return (
@@ -57,10 +56,9 @@ export const Sidebar = () => {
         className={`
           fixed inset-y-0 left-0 z-50 
           ${isCollapsed ? "w-16" : "w-64"} 
-          ${
-            isMobileOpen
-              ? "translate-x-0"
-              : "-translate-x-full md:translate-x-0"
+          ${isMobileOpen
+            ? "translate-x-0"
+            : "-translate-x-full md:translate-x-0"
           }
           transition-all duration-300 ease-in-out
           ${getThemeClasses.nav} backdrop-blur-xl border-r border-slate-700/50
@@ -70,9 +68,8 @@ export const Sidebar = () => {
         <div className="relative z-10">
           {/* Header */}
           <div
-            className={`relative flex items-center ${
-              isCollapsed ? "pl-4" : "pl-6"
-            } p-4 border-b border-slate-700/50 h-16`}
+            className={`relative flex items-center ${isCollapsed ? "pl-4" : "pl-6"
+              } p-4 border-b border-slate-700/50 h-16`}
           >
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-400 flex items-center justify-center flex-shrink-0">
@@ -118,15 +115,13 @@ export const Sidebar = () => {
                     href={item.url}
                     className={`
                       flex items-center rounded-lg
-                      ${
-                        isCollapsed
-                          ? "justify-center p-3"
-                          : "space-x-3 px-3 py-2.5"
+                      ${isCollapsed
+                        ? "justify-center p-3"
+                        : "space-x-3 px-3 py-2.5"
                       }
-                      ${
-                        isActive
-                          ? "bg-emerald-600/20 text-emerald-400 border border-emerald-500/30"
-                          : getThemeClasses.button.ghost
+                      ${isActive
+                        ? "bg-emerald-600/20 text-emerald-400 border border-emerald-500/30"
+                        : getThemeClasses.button.ghost
                       }
                       hover:bg-slate-100 dark:hover:bg-slate-700
                       relative overflow-hidden
@@ -139,24 +134,22 @@ export const Sidebar = () => {
                   >
                     <div className="relative">
                       <item.icon
-                        className={`w-5 h-5 ${
-                          isActive
+                        className={`w-5 h-5 ${isActive
                             ? "text-emerald-400"
                             : getThemeClasses.accent.emerald
-                        } transition-colors duration-200`}
+                          } transition-colors duration-200`}
                       />
                     </div>
 
                     {!isCollapsed && (
                       <span
-                        className={`${
-                          isActive
+                        className={`${isActive
                             ? "text-emerald-400 font-medium"
                             : getThemeClasses.text.secondary
-                        } group-hover:${getThemeClasses.text.primary.replace(
-                          "text-",
-                          "text-"
-                        )} transition-colors duration-200 flex-1`}
+                          } group-hover:${getThemeClasses.text.primary.replace(
+                            "text-",
+                            "text-"
+                          )} transition-colors duration-200 flex-1`}
                       >
                         {item.title}
                       </span>
@@ -177,16 +170,14 @@ export const Sidebar = () => {
 
         {/* Footer */}
         <div
-          className={`border-t border-slate-700/50 ${
-            isCollapsed ? "p-2" : "p-4"
-          } relative z-10`}
+          className={`border-t border-slate-700/50 ${isCollapsed ? "p-2" : "p-4"
+            } relative z-10`}
         >
           {/* Theme toggle */}
           <div className="relative group mb-2">
             <div
-              className={`w-full flex items-center ${
-                isCollapsed ? "pl-0" : "pl-2"
-              }`}
+              className={`w-full flex items-center ${isCollapsed ? "pl-0" : "pl-2"
+                }`}
             >
               <ThemeToggleButton className="border-none shadow-none" />
               {!isCollapsed && (
@@ -205,9 +196,8 @@ export const Sidebar = () => {
           {/* User profile */}
           <div className="relative group">
             <div
-              className={`flex items-center rounded-lg cursor-pointer transition-all duration-200 ${
-                isCollapsed ? "justify-center p-3" : "space-x-3 px-3 py-2.5"
-              } ${getThemeClasses.button.ghost}`}
+              className={`flex items-center rounded-lg cursor-pointer transition-all duration-200 ${isCollapsed ? "justify-center p-3" : "space-x-3 px-3 py-2.5"
+                } ${getThemeClasses.button.ghost}`}
             >
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-400 flex items-center justify-center flex-shrink-0">
                 <User2 className="w-4 h-4 text-white" />
