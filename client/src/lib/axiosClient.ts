@@ -3,7 +3,6 @@ import axios from 'axios';
 const axiosClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BASE_URL,
   withCredentials: true,
-  timeout: 10000,
 });
 
 // Request Interceptor
