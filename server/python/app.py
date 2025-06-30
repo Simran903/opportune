@@ -27,3 +27,23 @@ def scrape(job: Job):
     except Exception as e:
         print("[ERROR] during scraping:", repr(e))
         raise e  # Let Render capture the stack trace
+
+
+@app.get("/debug")
+def debug():
+    try:
+        from selenium import webdriver
+        from selenium.webdriver.chrome.options import Options
+        from selenium.webdriver.chrome.service import Service
+
+        options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        driver = webdriver.Chrome(service=Service(), options=options)
+        driver.get("https://www.google.com")
+        title = driver.title
+        driver.quit()
+        return {"message": "Selenium ran successfully", "title": title}
+    except Exception as e:
+        return {"error": str(e)}
