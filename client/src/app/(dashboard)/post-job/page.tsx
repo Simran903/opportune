@@ -2,8 +2,6 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   Briefcase,
-  MapPin,
-  Building2,
   FileText,
   CheckCircle,
   AlertCircle,
@@ -52,7 +50,6 @@ const PostJob = () => {
   const [pendingDraft, setPendingDraft] = useState<DraftJob | null>(null);
   const isDirty = useRef(false);
 
-  // Calculate progress based on filled fields
   const progress = useMemo(() => {
     const fields = [
       formData.title,
@@ -66,18 +63,15 @@ const PostJob = () => {
     return Math.round((filledFields / fields.length) * 100);
   }, [formData]);
 
-  // Load drafts from memory on component mount
   useEffect(() => {
     const savedDrafts = JSON.parse(localStorage.getItem('jobDrafts') || '[]');
     setDrafts(savedDrafts);
   }, []);
 
-  // Mark dirty on change
   useEffect(() => {
     isDirty.current = true;
   }, [formData]);
 
-  // Debounced auto-save
   useEffect(() => {
     const hasContent = Object.values(formData).some(value => value.trim().length > 0);
     if (hasContent && progress > 0 && progress < 100) {
@@ -186,13 +180,11 @@ const PostJob = () => {
     setSuccess(false);
 
     try {
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       setSuccess(true);
       setFormData({ title: "", description: "", location: "", company: "" });
       
-      // Remove current draft after successful submission
       if (currentDraftId) {
         handleDeleteDraft(currentDraftId);
         setCurrentDraftId(null);
@@ -372,7 +364,6 @@ const PostJob = () => {
             </div>
           )}
 
-          {/* Prompt before loading draft if unsaved changes */}
           {pendingDraft && (
             <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-2 sm:p-4">
               <div className="bg-white dark:bg-slate-800 rounded-xl p-4 sm:p-6 shadow-xl border border-slate-200 dark:border-slate-700 w-full max-w-xs sm:max-w-sm">
