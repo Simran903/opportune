@@ -62,10 +62,6 @@ const Jobs = () => {
     const fetchJobs = async () => {
       try {
         const response = await axiosClient.get("/job/job");
-        console.log("API Response:", response);
-        console.log("Response data:", response.data);
-        console.log("Response data type:", typeof response.data);
-        console.log("Is array:", Array.isArray(response.data));
 
         // Ensure we're getting an array from the response
         const jobsData = Array.isArray(response.data)
@@ -75,9 +71,6 @@ const Jobs = () => {
             : Array.isArray(response.data.data)
               ? response.data.data
               : [];
-
-        console.log("Processed jobs data:", jobsData);
-        console.log("Jobs data length:", jobsData.length);
 
         setJobs(jobsData);
         setFilteredJobs(jobsData);
