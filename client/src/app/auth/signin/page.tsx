@@ -5,6 +5,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { Input } from "@/components/ui/input";
 import axiosClient from "@/lib/axiosClient";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 
 const SigninPage = () => {
   const { getThemeClasses } = useTheme();
@@ -12,10 +13,15 @@ const SigninPage = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,15 +90,29 @@ const SigninPage = () => {
             >
               Password
             </label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              value={form.password}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 rounded-xl border transition-all duration-300 focus:outline-none ${theme.input}`}
-              autoComplete="current-password"
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 pr-12 rounded-xl border transition-all duration-300 focus:outline-none ${theme.input}`}
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className={`absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-md transition-colors duration-200 ${theme.button.ghost} hover:bg-slate-100 dark:hover:bg-slate-700`}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5 text-slate-500" />
+                ) : (
+                  <Eye className="w-5 h-5 text-slate-500" />
+                )}
+              </button>
+            </div>
           </div>
           {error && (
             <div className="text-red-600 text-sm text-center font-medium pt-1">
