@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { SidebarProvider } from "@/contexts/SidebarContext";
+import { SecurityProvider } from "@/contexts/SecurityContext";
+import SecurityAlerts from "@/components/SecurityAlerts";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Opportune",
-  description: "Hire Smartly",
+  title: "Opportune - AI-Powered Hiring Platform",
+  description: "Connect with India's top tech talent through AI-powered candidate matching",
 };
 
 export default function RootLayout({
@@ -42,14 +45,19 @@ export default function RootLayout({
           }}
         />
       </head>
-      <ThemeProvider>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-          suppressHydrationWarning={true}
-        >
-          {children}
-        </body>
-      </ThemeProvider>
+      <SecurityProvider>
+        <ThemeProvider>
+          <SidebarProvider>
+            <body
+              className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+              suppressHydrationWarning={true}
+            >
+              {children}
+              <SecurityAlerts />
+            </body>
+          </SidebarProvider>
+        </ThemeProvider>
+      </SecurityProvider>
     </html>
   );
 }

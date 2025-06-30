@@ -12,6 +12,7 @@ import {
   Eye,
   Trash2,
 } from "lucide-react";
+import axiosClient from "@/lib/axiosClient";
 
 interface FormData {
   title: string;
@@ -168,7 +169,7 @@ const PostJob = () => {
     const updatedDrafts = drafts.filter(d => d.id !== draftId);
     setDrafts(updatedDrafts);
     localStorage.setItem('jobDrafts', JSON.stringify(updatedDrafts));
-    
+
     if (currentDraftId === draftId) {
       setCurrentDraftId(null);
     }
@@ -180,18 +181,27 @@ const PostJob = () => {
     setSuccess(false);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      const response = await axiosClient.post('/job/job', {
+        title: formData.title,
+        description: formData.description,
+        location: formData.location,
+        company: formData.company,
+      });
+
       setSuccess(true);
       setFormData({ title: "", description: "", location: "", company: "" });
-      
+
       if (currentDraftId) {
         handleDeleteDraft(currentDraftId);
         setCurrentDraftId(null);
       }
+
+      // Optional: Redirect to dashboard or show success message
+      console.log('Job posted successfully:', response.data);
     } catch (err: any) {
       console.error("Error posting job:", err);
-      setError("Something went wrong. Please try again.");
+      const errorMessage = err.response?.data?.message || "Something went wrong. Please try again.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -240,7 +250,7 @@ const PostJob = () => {
                 </p>
               </div>
             </div>
-            
+
             {/* Draft Actions */}
             <div className="flex items-center gap-3 w-full sm:w-auto">
               {drafts.length > 0 && (

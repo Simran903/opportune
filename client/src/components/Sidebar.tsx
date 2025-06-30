@@ -22,6 +22,7 @@ import { ThemeToggleButton } from "./ThemeToggleButton";
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import axiosClient from "@/lib/axiosClient";
+import { TokenManager, SessionManager, SecurityLogger } from "@/lib/security";
 
 export const Sidebar = () => {
   const { isDark, getThemeClasses } = useTheme();
@@ -59,20 +60,78 @@ export const Sidebar = () => {
   };
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("accessToken");
-      if (token) {
+    const initializeUser = async () => {
+      if (typeof window !== "undefined") {
         try {
-          const decoded: any = jwtDecode(token);
-          setUser({ name: decoded.name, email: decoded.email });
+          const token = await TokenManager.getToken();
+          if (token && TokenManager.isTokenValid(token)) {
+            const decoded: any = jwtDecode(token);
+            setUser({ name: decoded.name, email: decoded.email });
+            
+            // Log user session
+            SecurityLogger.logSecurityEvent('USER_SESSION_ACTIVE', {
+              userId: decoded.id,
+              email: decoded.email,
+              timestamp: new Date().toISOString(),
+            });
+          } else {
+            setUser(null);
+            // Redirect to login if token is invalid
+            if (pathname !== '/auth/signin' && pathname !== '/auth/signup') {
+              router.push('/auth/signin');
+            }
+          }
         } catch (e) {
           setUser(null);
+          SecurityLogger.logSecurityEvent('TOKEN_DECODE_ERROR', {
+            error: e instanceof Error ? e.message : 'Unknown error',
+            pathname,
+          });
         }
-      } else {
-        setUser(null);
       }
-    }
-  }, []);
+    };
+
+    initializeUser();
+  }, [pathname, router]);
+
+  // Session validation
+  useEffect(() => {
+    const checkSession = () => {
+      if (!SessionManager.isSessionValid()) {
+        SecurityLogger.logSecurityEvent('SESSION_EXPIRED', {
+          pathname,
+          timestamp: new Date().toISOString(),
+        });
+        
+        // Clear user data and redirect to login
+        setUser(null);
+        TokenManager.removeToken();
+        SessionManager.endSession();
+        router.push('/auth/signin');
+      }
+    };
+
+    // Check session every 5 minutes
+    const sessionCheckInterval = setInterval(checkSession, 5 * 60 * 1000);
+    
+    // Also check on user activity
+    const handleUserActivity = () => {
+      SessionManager.updateActivity();
+    };
+
+    window.addEventListener('mousedown', handleUserActivity);
+    window.addEventListener('keydown', handleUserActivity);
+    window.addEventListener('scroll', handleUserActivity);
+    window.addEventListener('click', handleUserActivity);
+
+    return () => {
+      clearInterval(sessionCheckInterval);
+      window.removeEventListener('mousedown', handleUserActivity);
+      window.removeEventListener('keydown', handleUserActivity);
+      window.removeEventListener('scroll', handleUserActivity);
+      window.removeEventListener('click', handleUserActivity);
+    };
+  }, [router]);
 
   useEffect(() => {
     if (showSuccessToast) {
@@ -83,11 +142,19 @@ export const Sidebar = () => {
     }
   }, [showSuccessToast]);
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     if (typeof window !== "undefined") {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
+      // Log sign out event
+      SecurityLogger.logSecurityEvent('USER_SIGNOUT', {
+        userId: user?.email,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Clear all security data
+      await TokenManager.removeToken();
+      SessionManager.endSession();
       setUser(null);
+      
       router.push("/");
     }
   };
@@ -113,6 +180,7 @@ export const Sidebar = () => {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword,
       });
+      
       setShowPasswordModal(false);
       setPasswordForm({
         currentPassword: "",
@@ -120,6 +188,12 @@ export const Sidebar = () => {
         confirmPassword: "",
       });
       setShowSuccessToast(true);
+      
+      // Log password update
+      SecurityLogger.logSecurityEvent('PASSWORD_UPDATED', {
+        userId: user?.email,
+        timestamp: new Date().toISOString(),
+      });
     } catch (error: any) {
       if (
         error.response &&
@@ -130,6 +204,13 @@ export const Sidebar = () => {
       } else {
         setPasswordError("Failed to update password");
       }
+      
+      // Log password update failure
+      SecurityLogger.logSecurityEvent('PASSWORD_UPDATE_FAILED', {
+        userId: user?.email,
+        error: error.response?.data?.message || 'Unknown error',
+        timestamp: new Date().toISOString(),
+      });
     } finally {
       setPasswordLoading(false);
     }
