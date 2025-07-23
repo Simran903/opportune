@@ -5,7 +5,6 @@ from scraper import fetch_profiles
 
 app = FastAPI()
 
-# Correctly set allowed origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -21,11 +20,12 @@ app.add_middleware(
 
 class Job(BaseModel):
     description: str
+    employer_id: int
 
 @app.post("/scrape")
 def scrape(job: Job):
     try:
-        profiles = fetch_profiles(job.description)
+        profiles = fetch_profiles(job.description, job.employer_id)
         return {"profiles": profiles}
     except Exception as e:
         return {"error": str(e)}

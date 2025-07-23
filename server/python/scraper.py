@@ -5,17 +5,9 @@ from keybert import KeyBERT
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+import requests
 
-# -----------------------------
-# CONFIGURATION
-# -----------------------------
-USE_BING = False  # ✅ Change to True to use Bing instead of Google
-DEBUG = True      # ✅ Set to False to suppress console output
-USE_FAKE_DATA = False  # ✅ Use True for testing without scraping
-
-# -----------------------------
-# UTILITIES
-# -----------------------------
+DEBUG = True
 
 def debug_log(*args):
     if DEBUG:
@@ -42,7 +34,6 @@ def is_linkedin_profile_url(url):
         url
         and "linkedin.com/in/" in url
         and "google.com" not in url
-        and "bing.com" not in url
         and "accounts.google.com" not in url
     )
 
@@ -50,22 +41,28 @@ def clean_link(url):
     return url.split("?")[0].split("&")[0]
 
 # -----------------------------
-# MAIN SCRAPER FUNCTION
+# MAIN SCRAPER LOGIC
 # -----------------------------
 
-def fetch_profiles(description):
-    if USE_FAKE_DATA:
-        debug_log("🧪 Returning fake data for testing")
-        return [
-            {"profileUrl": "https://linkedin.com/in/test-user-1"},
-            {"profileUrl": "https://linkedin.com/in/test-user-2"},
-        ]
+def fetch_seen_profiles(employer_id):
+    """Call backend API to get already seen LinkedIn profile URLs for the employer."""
+    try:
+        response = requests.get(f"http://localhost:3001/api/employer/{employer_id}/seen-profiles")
+        return set(response.json().get("seenProfiles", []))
+    except Exception as e:
+        debug_log("Error fetching seen profiles:", str(e))
+        return set()
 
+def fetch_profiles(description, employer_id):
     keywords = extract_keywords(description)
-    debug_log("🔍 Extracted Keywords:", keywords)
+    debug_log("Extracted Keywords:", keywords)
+
+    seen_profiles = fetch_seen_profiles(employer_id)
+    debug_log("Already seen:", seen_profiles)
 
     driver = init_driver()
     results = []
+    collected = set()
 
     fallback_keywords = {
         "rxjs": "angular",
@@ -77,40 +74,39 @@ def fetch_profiles(description):
     for keyword in keywords:
         search_keyword = fallback_keywords.get(keyword, keyword)
 
-        if USE_BING:
-            query = f'site:linkedin.com/in {search_keyword} developer India'
-            search_url = f"https://www.bing.com/search?q={query}"
-        else:
+        for page in range(0, 3):
+            start = page * 10
             query = f'site:linkedin.com/in "{search_keyword} developer" India'
-            search_url = f"https://www.google.com/search?q={query}"
+            search_url = f"https://www.google.com/search?q={query}&start={start}"
 
-        debug_log(f"🔗 Searching for: {search_url}")
+            debug_log(f"Searching: {search_url}")
 
-        try:
-            driver.get(search_url)
-            time.sleep(7)  # Let the page load
+            try:
+                driver.get(search_url)
+                time.sleep(6)
 
-            links = driver.find_elements(By.CSS_SELECTOR, "a")
-            debug_log(f"🔗 Found {len(links)} links")
+                links = driver.find_elements(By.CSS_SELECTOR, "a")
+                debug_log(f"Found {len(links)} links")
 
-            found = 0
-            for link in links:
-                href = link.get_attribute("href")
-                debug_log("🔗 href:", href)
-                if is_linkedin_profile_url(href) and href not in [r["profileUrl"] for r in results]:
-                    results.append({"profileUrl": clean_link(href)})
-                    found += 1
-                    if found >= 2:
+                for link in links:
+                    href = link.get_attribute("href")
+                    if is_linkedin_profile_url(href):
+                        url = clean_link(href)
+                        if url not in seen_profiles and url not in collected:
+                            results.append({"profileUrl": url})
+                            collected.add(url)
+
+                    if len(results) >= 20:
                         break
 
-            debug_log(f"✅ Keyword '{keyword}' → Found {found} profiles")
+            except Exception as e:
+                debug_log("Error scraping:", str(e))
 
-        except Exception as e:
-            debug_log(f"❌ Error scraping for keyword '{keyword}':", str(e))
-            time.sleep(2)
+            if len(results) >= 20:
+                break
 
-        if len(results) >= 5:
+        if len(results) >= 20:
             break
 
     driver.quit()
-    return results[:5]
+    return results[:20]

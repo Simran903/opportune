@@ -33,26 +33,31 @@ export const addJob = async (req, res) => {
       },
     });
 
-    // Python scraper API using axios
-    const { data } = await axios.post("http://localhost:8000/scrape", {
+    axios.post("http://localhost:10000/scrape", {
       description,
-    });
+      employer_id: userId,
+    })
+      .then(async (response) => {
+        const candidates = response.data.profiles || [];
 
-    const candidates = data.profiles || [];
+        for (const candidate of candidates) {
+          await prisma.candidate.create({
+            data: {
+              profileUrl: candidate.profileUrl,
+              job: { connect: { id: job.id } },
+            },
+          });
+        }
 
-    for (const candidate of candidates) {
-      await prisma.candidate.create({
-        data: {
-          profileUrl: candidate.profileUrl,
-          job: { connect: { id: job.id } },
-        },
+        console.log("Background scraping and candidate saving completed.");
+      })
+      .catch((err) => {
+        console.error("Background scraper failed:", err?.response?.data || err.message);
       });
-    }
 
     return res.status(201).json({
-      message: "Job created and candidates matched successfully",
+      message: "Job created. Candidates will be matched in the background.",
       job,
-      candidates,
     });
   } catch (error) {
     console.error("Error in addJob:", error?.response?.data || error.message);

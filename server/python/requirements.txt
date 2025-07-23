@@ -1,7 +1,11 @@
-keybert
+fastapi
+uvicorn[standard]
 selenium
+keybert
+pydantic
 scikit-learn
 transformers
+torch
 sentence-transformers
-fastapi
-uvicorn
+requests
+nltk
