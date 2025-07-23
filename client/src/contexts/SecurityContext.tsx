@@ -125,9 +125,13 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
         }
         
         if (!tokenValid) {
-          // Clear all data and redirect if not on auth pages
           const currentPath = window.location.pathname;
-          if (!currentPath.includes('/auth/')) {
+          const protectedRoutes = [
+            '/dashboard',
+            '/post-job',
+          ];
+          const isProtectedRoute = protectedRoutes.some(route => currentPath.startsWith(route));
+          if (isProtectedRoute) {
             await logout();
           }
         }
