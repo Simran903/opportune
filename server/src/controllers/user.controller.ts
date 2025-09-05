@@ -1,18 +1,23 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { z } from 'zod';
+import { Request, Response } from 'express';
 import prisma from "../config/client";
 
 const generateAccessToken = (user: any) => {
-  // @ts-ignore
+  if (!process.env.ACCESS_TOKEN_SECRET) {
+    throw new Error('ACCESS_TOKEN_SECRET is not defined');
+  }
+  
+  //@ts-ignore
   return jwt.sign(
     {
       id: user.id,
       email: user.email
     },
-    process.env.ACCESS_TOKEN_SECRET as string,
+    process.env.ACCESS_TOKEN_SECRET,
     {
-      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY || '24h',
     }
   );
 };
@@ -37,15 +42,16 @@ const updatePasswordSchema = z.object({
   newPassword: z.string().min(6).max(18, "New password must be 6–18 characters"),
 });
 
-export const signUp = async (req, res) => {
+export const signUp = async (req: Request, res: Response): Promise<void> => {
   const parseResult = signUpSchema.safeParse(req.body);
   if (!parseResult.success) {
-    return res.status(400).json({ error: parseResult.error.errors });
+    res.status(400).json({ error: parseResult.error.errors });
+    return;
   }
   const { name, email, password } = parseResult.data;
 
   if (!name || !email || !password) {
-    res.status(400).json({ error: "All field are required" });
+    res.status(400).json({ error: "All fields are required" });
     return;
   }
 
@@ -72,18 +78,18 @@ export const signUp = async (req, res) => {
         email: newUser.email,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Signup error:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
-}
+};
 
-export const signIn = async (req, res) => {
-
+export const signIn = async (req: Request, res: Response): Promise<void> => {
   try {
     const parseResult = signInSchema.safeParse(req.body);
     if (!parseResult.success) {
-      return res.status(400).json({ error: parseResult.error.errors });
+      res.status(400).json({ error: parseResult.error.errors });
+      return;
     }
     const { email, password } = parseResult.data;
 
@@ -99,7 +105,7 @@ export const signIn = async (req, res) => {
       return;
     }
 
-    const accesstoken = generateAccessToken(user)
+    const accesstoken = generateAccessToken(user);
 
     res.status(200).json({
       message: 'Login successful.',
@@ -109,15 +115,15 @@ export const signIn = async (req, res) => {
         name: user.name,
         email: user.email,
       },
-    })
+    });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Signin error:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
-}
+};
 
-export const userDetails = async (req, res) => {
+export const userDetails = async (req: Request, res: Response): Promise<void> => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user!.id },
@@ -127,22 +133,25 @@ export const userDetails = async (req, res) => {
         email: true,
         createdAt: true,
       },
-    })
+    });
 
-    if (!user)
-      return res.status(404).json({ error: 'User not found' });
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
 
-    res.status(200).json({ user })
-  } catch (error) {
+    res.status(200).json({ user });
+  } catch (error: any) {
     console.error('Fetch user error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
-}
+};
 
-export const updatePassword = async (req, res) => {
+export const updatePassword = async (req: Request, res: Response): Promise<void> => {
   const parseResult = updatePasswordSchema.safeParse(req.body);
   if (!parseResult.success) {
-    return res.status(400).json({ error: parseResult.error.errors });
+    res.status(400).json({ error: parseResult.error.errors });
+    return;
   }
 
   const { currentPassword, newPassword } = parseResult.data;
@@ -150,17 +159,20 @@ export const updatePassword = async (req, res) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
+      res.status(401).json({ error: "Unauthorized" });
+      return;
     }
 
-    const user = await prisma.user.findUnique({ where: { id: userId } })
+    const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      res.status(404).json({ error: "User not found" });
+      return;
     }
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
-      return res.status(401).json({ error: "Current password is incorrect" });
+      res.status(401).json({ error: "Current password is incorrect" });
+      return;
     }
 
     const hashedNewPassword = await encryptPassword(newPassword);
@@ -168,11 +180,11 @@ export const updatePassword = async (req, res) => {
     await prisma.user.update({
       where: { id: userId },
       data: { password: hashedNewPassword }
-    })
+    });
 
-    return res.status(200).json({ message: "Password updated successfully" });
-  } catch (error) {
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (error: any) {
     console.error("Update password error:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: "Internal Server Error" });
   }
-}
+};

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import prisma from "../config/client";
 import axios from "axios";
+import { Request, Response } from 'express';
 
 const jobSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -9,16 +10,18 @@ const jobSchema = z.object({
   company: z.string().min(1, "Company is required"),
 });
 
-export const addJob = async (req, res) => {
+export const addJob = async (req: Request, res: Response): Promise<void> => {
   const userId = req.user?.id;
   if (!userId) {
-    return res.status(401).json({ message: "User not authenticated" });
+    res.status(401).json({ message: "User not authenticated" });
+    return;
   }
 
   try {
     const parsedData = jobSchema.safeParse(req.body);
     if (!parsedData.success) {
-      return res.status(400).json({ message: "Validation failed", errors: parsedData.error.format() });
+      res.status(400).json({ message: "Validation failed", errors: parsedData.error.format() });
+      return;
     }
 
     const { title, description, location, company } = parsedData.data;
@@ -51,26 +54,27 @@ export const addJob = async (req, res) => {
 
         console.log("Background scraping and candidate saving completed.");
       })
-      .catch((err) => {
+      .catch((err: any) => {
         console.error("Background scraper failed:", err?.response?.data || err.message);
       });
 
-    return res.status(201).json({
+    res.status(201).json({
       message: "Job created. Candidates will be matched in the background.",
       job,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in addJob:", error?.response?.data || error.message);
-    return res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
-export const getAllJobs = async (req, res) => {
+export const getAllJobs = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
 
     if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
+      res.status(401).json({ message: "Unauthorized" });
+      return;
     }
 
     const jobs = await prisma.job.findMany({
@@ -79,19 +83,20 @@ export const getAllJobs = async (req, res) => {
       orderBy: { createdAt: "desc" },
     });
 
-    return res.status(200).json({ jobs });
-  } catch (error) {
+    res.status(200).json({ jobs });
+  } catch (error: any) {
     console.error("Error fetching job:", error);
-    return res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ message: "Internal server error." });
   }
 };
 
-export const getJobById = async (req, res) => {
+export const getJobById = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
 
   const jobId = parseInt(id);
   if (isNaN(jobId)) {
-    return res.status(400).json({ message: "Invalid job ID." });
+    res.status(400).json({ message: "Invalid job ID." });
+    return;
   }
 
   try {
@@ -108,33 +113,35 @@ export const getJobById = async (req, res) => {
       },
     });
 
-    return res.status(200).json({ job });
-  } catch (error) {
+    res.status(200).json({ job });
+  } catch (error: any) {
     console.error("Error fetching job:", error);
-    return res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ message: "Internal server error." });
   }
 };
 
-export const removeJob = async (req, res) => {
+export const removeJob = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
 
   const jobId = parseInt(id);
   if (isNaN(jobId)) {
-    return res.status(400).json({ message: "Invalid job ID." });
+    res.status(400).json({ message: "Invalid job ID." });
+    return;
   }
 
   try {
     const existingJob = await prisma.job.findUnique({ where: { id: jobId } });
 
     if (!existingJob) {
-      return res.status(404).json({ error: "Job not fount." });
+      res.status(404).json({ error: "Job not found." });
+      return;
     }
 
     await prisma.job.delete({ where: { id: jobId } });
 
-    return res.status(200).json({ message: "Job removed successfully." });
-  } catch (error) {
+    res.status(200).json({ message: "Job removed successfully." });
+  } catch (error: any) {
     console.error("Error fetching job:", error);
-    return res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ message: "Internal server error." });
   }
 };
