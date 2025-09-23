@@ -38,8 +38,10 @@ model Job {
 
 model Candidate {
   id         Int      @id @default(autoincrement())
-  profileUrl String?
+  profileUrl String   
   createdAt  DateTime @default(now())
   job        Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
   jobId      Int
+
+  @@unique([profileUrl, jobId]) // prevent duplicate candidates for same job
 }

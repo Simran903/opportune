@@ -3546,7 +3546,7 @@ export namespace Prisma {
 
   export type CandidateGroupByOutputType = {
     id: number
-    profileUrl: string | null
+    profileUrl: string
     createdAt: Date
     jobId: number
     _count: CandidateCountAggregateOutputType | null
@@ -3619,7 +3619,7 @@ export namespace Prisma {
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
-      profileUrl: string | null
+      profileUrl: string
       createdAt: Date
       jobId: number
     }, ExtArgs["result"]["candidate"]>
@@ -4738,7 +4738,7 @@ export namespace Prisma {
     OR?: CandidateWhereInput[]
     NOT?: CandidateWhereInput | CandidateWhereInput[]
     id?: IntFilter<"Candidate"> | number
-    profileUrl?: StringNullableFilter<"Candidate"> | string | null
+    profileUrl?: StringFilter<"Candidate"> | string
     createdAt?: DateTimeFilter<"Candidate"> | Date | string
     jobId?: IntFilter<"Candidate"> | number
     job?: XOR<JobScalarRelationFilter, JobWhereInput>
@@ -4746,7 +4746,7 @@ export namespace Prisma {
 
   export type CandidateOrderByWithRelationInput = {
     id?: SortOrder
-    profileUrl?: SortOrderInput | SortOrder
+    profileUrl?: SortOrder
     createdAt?: SortOrder
     jobId?: SortOrder
     job?: JobOrderByWithRelationInput
@@ -4754,18 +4754,19 @@ export namespace Prisma {
 
   export type CandidateWhereUniqueInput = Prisma.AtLeast<{
     id?: number
+    profileUrl_jobId?: CandidateProfileUrlJobIdCompoundUniqueInput
     AND?: CandidateWhereInput | CandidateWhereInput[]
     OR?: CandidateWhereInput[]
     NOT?: CandidateWhereInput | CandidateWhereInput[]
-    profileUrl?: StringNullableFilter<"Candidate"> | string | null
+    profileUrl?: StringFilter<"Candidate"> | string
     createdAt?: DateTimeFilter<"Candidate"> | Date | string
     jobId?: IntFilter<"Candidate"> | number
     job?: XOR<JobScalarRelationFilter, JobWhereInput>
-  }, "id">
+  }, "id" | "profileUrl_jobId">
 
   export type CandidateOrderByWithAggregationInput = {
     id?: SortOrder
-    profileUrl?: SortOrderInput | SortOrder
+    profileUrl?: SortOrder
     createdAt?: SortOrder
     jobId?: SortOrder
     _count?: CandidateCountOrderByAggregateInput
@@ -4780,7 +4781,7 @@ export namespace Prisma {
     OR?: CandidateScalarWhereWithAggregatesInput[]
     NOT?: CandidateScalarWhereWithAggregatesInput | CandidateScalarWhereWithAggregatesInput[]
     id?: IntWithAggregatesFilter<"Candidate"> | number
-    profileUrl?: StringNullableWithAggregatesFilter<"Candidate"> | string | null
+    profileUrl?: StringWithAggregatesFilter<"Candidate"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Candidate"> | Date | string
     jobId?: IntWithAggregatesFilter<"Candidate"> | number
   }
@@ -4920,46 +4921,46 @@ export namespace Prisma {
   }
 
   export type CandidateCreateInput = {
-    profileUrl?: string | null
+    profileUrl: string
     createdAt?: Date | string
     job: JobCreateNestedOneWithoutCandidatesInput
   }
 
   export type CandidateUncheckedCreateInput = {
     id?: number
-    profileUrl?: string | null
+    profileUrl: string
     createdAt?: Date | string
     jobId: number
   }
 
   export type CandidateUpdateInput = {
-    profileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileUrl?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     job?: JobUpdateOneRequiredWithoutCandidatesNestedInput
   }
 
   export type CandidateUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
-    profileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileUrl?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     jobId?: IntFieldUpdateOperationsInput | number
   }
 
   export type CandidateCreateManyInput = {
     id?: number
-    profileUrl?: string | null
+    profileUrl: string
     createdAt?: Date | string
     jobId: number
   }
 
   export type CandidateUpdateManyMutationInput = {
-    profileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileUrl?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type CandidateUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
-    profileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileUrl?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     jobId?: IntFieldUpdateOperationsInput | number
   }
@@ -5190,6 +5191,11 @@ export namespace Prisma {
   export type JobScalarRelationFilter = {
     is?: JobWhereInput
     isNot?: JobWhereInput
+  }
+
+  export type CandidateProfileUrlJobIdCompoundUniqueInput = {
+    profileUrl: string
+    jobId: number
   }
 
   export type CandidateCountOrderByAggregateInput = {
@@ -5572,13 +5578,13 @@ export namespace Prisma {
   }
 
   export type CandidateCreateWithoutJobInput = {
-    profileUrl?: string | null
+    profileUrl: string
     createdAt?: Date | string
   }
 
   export type CandidateUncheckedCreateWithoutJobInput = {
     id?: number
-    profileUrl?: string | null
+    profileUrl: string
     createdAt?: Date | string
   }
 
@@ -5641,7 +5647,7 @@ export namespace Prisma {
     OR?: CandidateScalarWhereInput[]
     NOT?: CandidateScalarWhereInput | CandidateScalarWhereInput[]
     id?: IntFilter<"Candidate"> | number
-    profileUrl?: StringNullableFilter<"Candidate"> | string | null
+    profileUrl?: StringFilter<"Candidate"> | string
     createdAt?: DateTimeFilter<"Candidate"> | Date | string
     jobId?: IntFilter<"Candidate"> | number
   }
@@ -5739,24 +5745,24 @@ export namespace Prisma {
 
   export type CandidateCreateManyJobInput = {
     id?: number
-    profileUrl?: string | null
+    profileUrl: string
     createdAt?: Date | string
   }
 
   export type CandidateUpdateWithoutJobInput = {
-    profileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileUrl?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type CandidateUncheckedUpdateWithoutJobInput = {
     id?: IntFieldUpdateOperationsInput | number
-    profileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileUrl?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type CandidateUncheckedUpdateManyWithoutJobInput = {
     id?: IntFieldUpdateOperationsInput | number
-    profileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileUrl?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
