@@ -65,7 +65,7 @@ const SigninPage = () => {
 
     const sanitizedForm = {
       email: InputSanitizer.sanitizeEmail(form.email),
-      password: form.password, // Don't sanitize password as it might contain special chars
+      password: form.password,
     };
 
     if (!InputSanitizer.validateEmail(sanitizedForm.email)) {
