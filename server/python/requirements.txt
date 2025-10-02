@@ -1,11 +1,10 @@
 fastapi
 uvicorn[standard]
-selenium
 keybert
 pydantic
-scikit-learn
-transformers
-torch
-sentence-transformers
 requests
-nltk
+scraperapi-sdk
+beautifulsoup4
+lxml
+os
+dotenv

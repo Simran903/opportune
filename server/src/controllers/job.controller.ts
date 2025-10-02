@@ -18,7 +18,12 @@ export const addJob = async (req, res) => {
   try {
     const parsedData = jobSchema.safeParse(req.body);
     if (!parsedData.success) {
-      return res.status(400).json({ message: "Validation failed", errors: parsedData.error.format() });
+      return res
+        .status(400)
+        .json({
+          message: "Validation failed",
+          errors: parsedData.error.format(),
+        });
     }
 
     const { title, description, location, company } = parsedData.data;
@@ -33,10 +38,11 @@ export const addJob = async (req, res) => {
       },
     });
 
-    axios.post("http://localhost:10000/scrape", {
-      description,
-      employer_id: userId,
-    })
+    axios
+      .post("http://localhost:10000/scrape", {
+        description,
+        employer_id: userId,
+      })
       .then(async (response) => {
         const candidates = response.data.profiles || [];
 
@@ -48,11 +54,12 @@ export const addJob = async (req, res) => {
             },
           });
         }
-
-        console.log("Background scraping and candidate saving completed.");
       })
       .catch((err) => {
-        console.error("Background scraper failed:", err?.response?.data || err.message);
+        console.error(
+          "Background scraper failed:",
+          err?.response?.data || err.message
+        );
       });
 
     return res.status(201).json({
@@ -136,5 +143,83 @@ export const removeJob = async (req, res) => {
   } catch (error) {
     console.error("Error fetching job:", error);
     return res.status(500).json({ message: "Internal server error." });
+  }
+};
+
+export const saveProfiles = async (req, res) => {
+  const { id } = req.params;
+  const { profiles } = req.body;
+
+  if (!profiles || !Array.isArray(profiles)) {
+    return res.status(400).json({ message: "Profiles must be an array" });
+  }
+
+  try {
+    const employerId = parseInt(id);
+    if (isNaN(employerId)) {
+      return res.status(400).json({ message: "Invalid employer ID." });
+    }
+
+    const latestJob = await prisma.job.findFirst({
+      where: { userId: employerId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!latestJob) {
+      return res
+        .status(404)
+        .json({ message: "No job found for this employer." });
+    }
+
+    const result = await prisma.candidate.createMany({
+      data: profiles.map((profile) => ({
+        profileUrl: profile.profileUrl,
+        jobId: latestJob.id,
+      })),
+      skipDuplicates: true,
+    });
+
+    return res.status(200).json({
+      message: "Profiles saved successfully",
+      count: result.count,
+    });
+  } catch (error) {
+    console.error("Error saving profiles:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+export const getSeenProfiles = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const employerId = parseInt(id);
+    if (isNaN(employerId)) {
+      return res.status(400).json({ message: "Invalid employer ID." });
+    }
+
+    const candidates = await prisma.candidate.findMany({
+      where: {
+        job: {
+          userId: employerId,
+        },
+      },
+      select: {
+        profileUrl: true,
+      },
+    });
+
+    const seenProfiles = candidates.map((c) => c.profileUrl);
+
+    return res.status(200).json({ seenProfiles });
+  } catch (error) {
+    console.error("Error fetching seen profiles:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
   }
 };

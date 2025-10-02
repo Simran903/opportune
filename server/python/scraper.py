@@ -1,26 +1,22 @@
 import time
 import requests
 from keybert import KeyBERT
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
+from bs4 import BeautifulSoup
+import re
+import os
+from dotenv import load_dotenv
 
-DEBUG = True
+load_dotenv()
 
+DEBUG = False
 
-# -----------------------------
-# LOGGING HELPER
-# -----------------------------
+SCRAPER_API_KEY = os.getenv("SCRAPER_API_KEY")
+
 def debug_log(*args):
     if DEBUG:
         print(*args)
 
 
-# -----------------------------
-# KEYWORD EXTRACTION
-# -----------------------------
 def extract_keywords(text: str, top_n: int = 5):
     """Extract keywords using KeyBERT."""
     kw_model = KeyBERT()
@@ -28,84 +24,98 @@ def extract_keywords(text: str, top_n: int = 5):
     return [kw[0].lower() for kw in keywords]
 
 
-# -----------------------------
-# SELENIUM DRIVER SETUP
-# -----------------------------
-def init_driver():
-    """Initialize Selenium Chrome driver."""
-    options = Options()
-    options.add_argument("--headless=new")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument(
-        "user-agent=Mozilla/5.0 (X11; Linux x86_64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/114.0.0.0 Safari/537.36"
-    )
-
-    service = Service(ChromeDriverManager().install())
-    return webdriver.Chrome(service=service, options=options)
-
-
-# -----------------------------
-# URL HELPERS
-# -----------------------------
 def is_linkedin_profile_url(url: str) -> bool:
+    """Check if URL is a valid LinkedIn profile."""
     return (
         url
         and "linkedin.com/in/" in url
         and "google.com" not in url
         and "accounts.google.com" not in url
+        and "/signup" not in url
+        and "/login" not in url
     )
 
 
 def clean_link(url: str) -> str:
-    return url.split("?")[0].split("&")[0]
+    """Clean URL by removing query parameters."""
+    url = url.split("?")[0].split("&")[0]
+    url = url.rstrip("/")
+    return url
 
 
-# -----------------------------
-# BACKEND API HELPERS
-# -----------------------------
+def extract_linkedin_urls_from_html(html_content: str) -> list:
+    """Extract LinkedIn profile URLs from HTML content."""
+    soup = BeautifulSoup(html_content, 'lxml')
+    urls = []
+    
+    for link in soup.find_all('a', href=True):
+        href = link['href']
+        
+        if is_linkedin_profile_url(href):
+            clean_url = clean_link(href)
+            if clean_url not in urls:
+                urls.append(clean_url)
+        
+        elif 'linkedin.com/in/' in href:
+            match = re.search(r'(https?://[^/]*linkedin\.com/in/[^/&?]+)', href)
+            if match:
+                clean_url = clean_link(match.group(1))
+                if clean_url not in urls:
+                    urls.append(clean_url)
+    
+    return urls
+
+
 def fetch_seen_profiles(employer_id: int):
     """Fetch already seen LinkedIn profile URLs for an employer from backend."""
     try:
-        response = requests.get(
-            f"http://localhost:5000/api/employer/{employer_id}/seen-profiles"
-        )
-        return set(response.json().get("seenProfiles", []))
+        url = f"http://localhost:5000/api/v1/job/employer/{employer_id}/seen-profiles"
+        response = requests.get(url, timeout=10)
+        
+        if response.status_code == 200:
+            seen = set(response.json().get("seenProfiles", []))
+            return seen
+        else:
+            return set()
     except Exception as e:
-        debug_log("Error fetching seen profiles:", str(e))
+        debug_log(f"Error fetching seen profiles: {str(e)}")
         return set()
 
 
 def save_profiles(employer_id: int, profiles: list[dict]):
     """Send new profiles to backend to save in DB."""
     try:
+        url = f"http://localhost:5000/api/v1/job/employer/{employer_id}/profiles"
         response = requests.post(
-            f"http://localhost:5000/api/employer/{employer_id}/profiles",
+            url,
             json={"profiles": profiles},
+            timeout=10
         )
+        
         if response.status_code == 200:
-            debug_log("✅ Saved profiles successfully")
+            print(f"Saved {len(profiles)} profiles successfully")
+            return True
         else:
-            debug_log("❌ Failed to save profiles:", response.status_code, response.text)
+            print(f"Failed to save profiles: {response.status_code}")
+            return False
     except Exception as e:
-        debug_log("Error saving profiles:", str(e))
+        print(f"Error saving profiles: {str(e)}")
+        return False
 
 
-# -----------------------------
-# MAIN SCRAPER LOGIC
-# -----------------------------
 def fetch_profiles(description: str, employer_id: int, limit: int = 20):
-    """Scrape LinkedIn profiles from Google search results."""
-    keywords = extract_keywords(description)
+    """Scrape LinkedIn profiles from Google search results using ScraperAPI."""
+    
+    if SCRAPER_API_KEY == "YOUR_SCRAPERAPI_KEY_HERE":
+        print("ERROR: Please set your ScraperAPI key in scraper.py")
+        return []
+    
+    keywords = extract_keywords(description, top_n=3)
     debug_log("Extracted Keywords:", keywords)
 
     seen_profiles = fetch_seen_profiles(employer_id)
-    debug_log("Already seen:", seen_profiles)
+    debug_log(f"Already seen: {len(seen_profiles)} profiles")
 
-    driver = init_driver()
     results = []
     collected = set()
 
@@ -114,50 +124,62 @@ def fetch_profiles(description: str, employer_id: int, limit: int = 20):
         "ngrx": "angular",
         "typescript": "frontend",
         "javascript": "frontend",
+        "js": "javascript",
     }
 
     try:
         for keyword in keywords:
+            if len(results) >= limit:
+                break
+                
             search_keyword = fallback_keywords.get(keyword, keyword)
 
-            for page in range(0, 3):  # scrape first 3 Google pages
+            for page in range(0, 2):
+                if len(results) >= limit:
+                    break
+                    
                 start = page * 10
                 query = f'site:linkedin.com/in "{search_keyword} developer" India'
                 search_url = f"https://www.google.com/search?q={query}&start={start}"
 
-                debug_log(f"🔍 Searching: {search_url}")
+                debug_log(f"Searching: {search_url}")
 
                 try:
-                    driver.get(search_url)
-                    time.sleep(6)  # let Google load
-
-                    links = driver.find_elements(By.CSS_SELECTOR, "a")
-                    debug_log(f"Found {len(links)} links")
-
-                    for link in links:
-                        href = link.get_attribute("href")
-                        if is_linkedin_profile_url(href):
-                            url = clean_link(href)
+                    api_url = f"http://api.scraperapi.com?api_key={SCRAPER_API_KEY}&url={search_url}"
+                    response = requests.get(api_url, timeout=60)
+                    
+                    if response.status_code == 200:
+                        linkedin_urls = extract_linkedin_urls_from_html(response.text)
+                        
+                        for url in linkedin_urls:
                             if url not in seen_profiles and url not in collected:
                                 results.append({"profileUrl": url})
                                 collected.add(url)
-
-                        if len(results) >= limit:
-                            break
-
+                                
+                                if len(results) >= limit:
+                                    break
+                    else:
+                        if response.status_code == 401:
+                            print("Invalid API key - check your ScraperAPI key")
+                            return results
+                        elif response.status_code == 429:
+                            debug_log("Rate limit reached - waiting 60 seconds")
+                            time.sleep(60)
+                    
+                    time.sleep(2)
+                    
+                except requests.exceptions.Timeout:
+                    debug_log(f"Request timeout for page {page + 1}")
                 except Exception as e:
-                    debug_log("Error scraping:", str(e))
+                    debug_log(f"Error scraping page {page + 1}:", str(e))
 
-                if len(results) >= limit:
-                    break
+            time.sleep(3)
 
-            if len(results) >= limit:
-                break
+    except Exception as e:
+        print(f"Fatal error in fetch_profiles: {str(e)}")
 
-    finally:
-        driver.quit()
+    print(f"Total profiles collected: {len(results)}")
 
-    # Save results to backend
     if results:
         save_profiles(employer_id, results)
 
