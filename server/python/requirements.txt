@@ -6,5 +6,5 @@ requests
 scraperapi-sdk
 beautifulsoup4
 lxml
-os
-dotenv
+python-dotenv
+
