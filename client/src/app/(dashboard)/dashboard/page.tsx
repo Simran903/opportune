@@ -39,7 +39,7 @@ interface Job {
 }
 
 const Jobs = () => {
-  const { getThemeClasses } = useTheme();
+  const { getThemeClasses, isDark } = useTheme();
   const theme = getThemeClasses;
   const router = useRouter();
 
@@ -156,8 +156,23 @@ const Jobs = () => {
   };
 
   const getLinkedInUsername = (profileUrl: string) => {
-    const match = profileUrl.match(/\/in\/([^\/]+)\/?$/);
-    return match ? match[1] : profileUrl.split("/").pop() || "Unknown";
+    if (!profileUrl) return "Unknown";
+    
+    // Remove URL fragments (everything after #)
+    const urlWithoutFragment = profileUrl.split('#')[0];
+    
+    // Try to match LinkedIn profile pattern: /in/username
+    const match = urlWithoutFragment.match(/\/in\/([^\/\?]+)/);
+    if (match && match[1]) {
+      return match[1];
+    }
+    
+    // Fallback: get the last path segment before query params or fragments
+    const urlPath = urlWithoutFragment.split('?')[0];
+    const segments = urlPath.split('/').filter(seg => seg.length > 0);
+    const lastSegment = segments[segments.length - 1];
+    
+    return lastSegment || "Unknown";
   };
 
   const handleViewJobDetails = async (jobId: string) => {
@@ -208,7 +223,7 @@ const Jobs = () => {
   }
 
   return (
-    <div className="px-2 sm:px-4 md:px-6 relative">
+    <div className="relative">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="mb-8">
@@ -231,7 +246,7 @@ const Jobs = () => {
               </div>
             </div>
             <button
-              className={`${theme.button.primary} flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium w-full sm:w-auto`}
+              className={`bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl w-full sm:w-auto`}
               onClick={() => router.push("/post-job")}
             >
               <Plus className="w-4 h-4" />
@@ -241,31 +256,39 @@ const Jobs = () => {
 
           {/* Stats */}
           <div className="grid md:grid-cols-2 grid-cols-1 gap-4 mb-6">
-            <div className={`${theme.card} rounded-xl p-4`}>
+            <div className={`rounded-xl p-6 border backdrop-blur-xl shadow-lg transition-all duration-200 hover:shadow-xl ${
+              isDark 
+                ? "bg-slate-900/80 border-slate-800" 
+                : "bg-white/80 border-slate-200"
+            }`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className={`${theme.text.muted} text-sm`}>Total Jobs</p>
-                  <p className={`${theme.text.primary} text-2xl font-bold`}>
+                  <p className={`${theme.text.muted} text-sm font-medium mb-1`}>Total Jobs</p>
+                  <p className={`${theme.text.primary} text-3xl font-bold`}>
                     {jobs.length}
                   </p>
                 </div>
-                <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
-                  <Briefcase className="w-5 h-5 text-emerald-600" />
+                <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center">
+                  <Briefcase className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                 </div>
               </div>
             </div>
-            <div className={`${theme.card} rounded-xl p-4`}>
+            <div className={`rounded-xl p-6 border backdrop-blur-xl shadow-lg transition-all duration-200 hover:shadow-xl ${
+              isDark 
+                ? "bg-slate-900/80 border-slate-800" 
+                : "bg-white/80 border-slate-200"
+            }`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className={`${theme.text.muted} text-sm`}>
+                  <p className={`${theme.text.muted} text-sm font-medium mb-1`}>
                     Total Candidates
                   </p>
-                  <p className={`${theme.text.primary} text-2xl font-bold`}>
+                  <p className={`${theme.text.primary} text-3xl font-bold`}>
                     {getTotalCandidates()}
                   </p>
                 </div>
-                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                  <Users className="w-5 h-5 text-blue-600" />
+                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+                  <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
             </div>
@@ -273,10 +296,16 @@ const Jobs = () => {
         </div>
 
         {/* Filters and Search */}
-        <div className={`${theme.card} rounded-xl p-4 sm:p-6 mb-6`}>
+        <div className={`rounded-xl p-4 sm:p-6 mb-6 border backdrop-blur-xl shadow-lg ${
+          isDark 
+            ? "bg-slate-900/80 border-slate-800" 
+            : "bg-white/80 border-slate-200"
+        }`}>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
+                isDark ? "text-slate-400" : "text-slate-500"
+              }`} />
               <Input
                 type="text"
                 placeholder="Search jobs by title, company, or location..."
@@ -290,8 +319,14 @@ const Jobs = () => {
 
         {/* Jobs Grid */}
         {filteredJobs.length === 0 ? (
-          <div className={`${theme.card} rounded-xl p-8 sm:p-12 text-center`}>
-            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className={`rounded-xl p-8 sm:p-12 text-center border backdrop-blur-xl shadow-lg ${
+            isDark 
+              ? "bg-slate-900/80 border-slate-800" 
+              : "bg-white/80 border-slate-200"
+          }`}>
+            <div className={`w-16 h-16 ${
+              isDark ? "bg-slate-800" : "bg-slate-100"
+            } rounded-full flex items-center justify-center mx-auto mb-4`}>
               <Briefcase className="w-8 h-8 text-slate-400" />
             </div>
             <h3 className={`${theme.text.primary} text-lg font-semibold mb-2`}>
@@ -304,7 +339,7 @@ const Jobs = () => {
             </p>
             {jobs.length === 0 && (
               <button
-                className={`${theme.button.primary} flex items-center gap-2 px-6 py-3 rounded-lg w-full sm:w-auto`}
+                className={`bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl w-full sm:w-auto`}
                 onClick={() => router.push("/post-job")}
               >
                 <Plus className="w-4 h-4" />
@@ -317,7 +352,11 @@ const Jobs = () => {
             {filteredJobs.map((job) => (
               <div
                 key={job.id}
-                className={`${theme.card} rounded-xl p-4 sm:p-6 hover:shadow-lg transition-all duration-300 group`}
+                className={`rounded-xl p-4 sm:p-6 border backdrop-blur-xl shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-[1.02] group ${
+                  isDark 
+                    ? "bg-slate-900/80 border-slate-800 hover:border-emerald-500/50" 
+                    : "bg-white/80 border-slate-200 hover:border-emerald-200"
+                }`}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -394,9 +433,13 @@ const Jobs = () => {
 
         {/* Delete Confirmation Modal */}
         {showDeleteModal && jobToDelete && (
-          <div className="fixed inset-0 backdrop-blur-sm bg-white/30 dark:bg-black/30 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
             <div
-              className={`${theme.card} rounded-xl w-full max-w-xs sm:max-w-md`}
+              className={`rounded-xl w-full max-w-xs sm:max-w-md border backdrop-blur-xl shadow-xl ${
+                isDark 
+                  ? "bg-slate-900/95 border-slate-800" 
+                  : "bg-white/95 border-slate-200"
+              }`}
             >
               <div className="p-4 sm:p-6">
                 <div className="flex items-center gap-4 mb-4">
@@ -469,9 +512,13 @@ const Jobs = () => {
 
         {/* Candidates Modal */}
         {showCandidatesModal && selectedJob && (
-          <div className="fixed inset-0 backdrop-blur-sm bg-white/30 dark:bg-black/30 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
             <div
-              className={`${theme.card} rounded-xl w-full max-w-md sm:max-w-2xl max-h-[80vh] overflow-hidden`}
+              className={`rounded-xl w-full max-w-md sm:max-w-2xl max-h-[80vh] overflow-hidden border backdrop-blur-xl shadow-xl ${
+                isDark 
+                  ? "bg-slate-900/95 border-slate-800" 
+                  : "bg-white/95 border-slate-200"
+              }`}
             >
               <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
                 <div>
@@ -494,33 +541,42 @@ const Jobs = () => {
 
               <div className="p-4 sm:p-6 overflow-y-auto max-h-[60vh]">
                 {selectedJob.candidates && selectedJob.candidates.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-2">
                     {selectedJob.candidates.map((candidate) => (
                       <div
                         key={candidate.id}
-                        className={`${theme.card} border border-slate-200 dark:border-slate-700 rounded-lg p-4`}
+                        className={`border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${
+                          isDark 
+                            ? "bg-slate-800/50" 
+                            : "bg-slate-50/50"
+                        }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                              <Users className="w-5 h-5 text-blue-600" />
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                              <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                             </div>
-                            <div>
+                            <div className="flex-1 min-w-0">
                               <h4
-                                className={`${theme.text.primary} font-medium`}
+                                className={`${theme.text.primary} font-medium truncate`}
+                                title={getLinkedInUsername(candidate.profileUrl)}
                               >
                                 {getLinkedInUsername(candidate.profileUrl)}
                               </h4>
-                              <p className={`${theme.text.muted} text-sm`}>
+                              <p className={`${theme.text.muted} text-xs mt-0.5`}>
                                 {formatDate(candidate.createdAt)}
                               </p>
                             </div>
                           </div>
                           <a
-                            href={candidate.profileUrl}
+                            href={candidate.profileUrl.split('#')[0]}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg ${theme.button.secondary} hover:bg-blue-50 dark:hover:bg-blue-900/30 text-sm`}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-shrink-0 ${
+                              isDark
+                                ? "bg-slate-700 hover:bg-slate-600 text-slate-200"
+                                : "bg-slate-200 hover:bg-slate-300 text-slate-700"
+                            }`}
                           >
                             <ExternalLink className="w-4 h-4" />
                             View Profile
@@ -551,8 +607,12 @@ const Jobs = () => {
 
         {/* Job Details Modal */}
         {showJobDetailsModal && (
-          <div className="fixed inset-0 backdrop-blur-sm bg-white/30 dark:bg-black/30 flex items-center justify-center z-50 p-2 sm:p-4">
-            <div className={`${theme.card} rounded-xl w-full max-w-md sm:max-w-2xl max-h-[80vh] overflow-hidden`}>
+          <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
+            <div className={`rounded-xl w-full max-w-md sm:max-w-2xl max-h-[80vh] overflow-hidden border backdrop-blur-xl shadow-xl ${
+              isDark 
+                ? "bg-slate-900/95 border-slate-800" 
+                : "bg-white/95 border-slate-200"
+            }`}>
               <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
                 <div>
                   <h2 className={`${theme.text.primary} text-xl font-semibold`}>Job Details</h2>
@@ -592,36 +652,51 @@ const Jobs = () => {
                     </div>
                     <p className={`${theme.text.muted} text-sm mb-4`}>{jobDetails.description}</p>
                     <div className="mb-4">
-                      <h4 className={`${theme.text.primary} font-medium mb-2`}>Candidates</h4>
+                      <h4 className={`${theme.text.primary} font-medium mb-3`}>Candidates ({jobDetails.candidates?.length || 0})</h4>
                       {jobDetails.candidates && jobDetails.candidates.length > 0 ? (
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                           {jobDetails.candidates.map((candidate: Candidate) => (
-                            <div key={candidate.id} className={`${theme.card} border border-slate-200 dark:border-slate-700 rounded-lg p-3 flex items-center justify-between`}>
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                                  <Users className="w-4 h-4 text-blue-600" />
+                            <div key={candidate.id} className={`border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${
+                              isDark 
+                                ? "bg-slate-800/50" 
+                                : "bg-slate-50/50"
+                            }`}>
+                              <div className="flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h5 className={`${theme.text.primary} font-medium truncate`} title={getLinkedInUsername(candidate.profileUrl)}>
+                                      {getLinkedInUsername(candidate.profileUrl)}
+                                    </h5>
+                                    <p className={`${theme.text.muted} text-xs mt-0.5`}>{formatDate(candidate.createdAt)}</p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <h5 className={`${theme.text.primary} font-medium`}>{getLinkedInUsername(candidate.profileUrl)}</h5>
-                                  <p className={`${theme.text.muted} text-xs`}>{formatDate(candidate.createdAt)}</p>
-                                </div>
+                                <a
+                                  href={candidate.profileUrl.split('#')[0]}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-shrink-0 ${
+                                    isDark
+                                      ? "bg-slate-700 hover:bg-slate-600 text-slate-200"
+                                      : "bg-slate-200 hover:bg-slate-300 text-slate-700"
+                                  }`}
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                  View Profile
+                                </a>
                               </div>
-                              <a
-                                href={candidate.profileUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={`flex items-center gap-2 px-2 py-1 rounded-lg ${theme.button.secondary} hover:bg-blue-50 dark:hover:bg-blue-900/30 text-xs`}
-                              >
-                                <ExternalLink className="w-4 h-4" />
-                                View Profile
-                              </a>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <div className="text-center py-4">
-                          <Users className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                          <p className={`${theme.text.secondary}`}>No candidates yet.</p>
+                        <div className="text-center py-8">
+                          <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Users className="w-8 h-8 text-slate-400" />
+                          </div>
+                          <p className={`${theme.text.secondary} font-medium`}>No candidates yet.</p>
+                          <p className={`${theme.text.muted} text-sm mt-1`}>Candidates who apply for this job will appear here.</p>
                         </div>
                       )}
                     </div>

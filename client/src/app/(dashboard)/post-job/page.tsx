@@ -12,6 +12,7 @@ import {
   Eye,
   Trash2,
 } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 import axiosClient from "@/lib/axiosClient";
 
 interface FormData {
@@ -30,6 +31,8 @@ interface DraftJob extends FormData {
 }
 
 const PostJob = () => {
+  const { getThemeClasses, isDark } = useTheme();
+  const theme = getThemeClasses;
   const [formData, setFormData] = useState<FormData>({
     title: "",
     description: "",
@@ -217,7 +220,11 @@ const PostJob = () => {
   };
 
   // Common input styles for consistency
-  const inputStyles = `w-full px-4 py-3 rounded-xl border-2 bg-white/90 dark:bg-slate-800/60 border-slate-300 dark:border-slate-700 ring-1 ring-inset ring-slate-200 dark:ring-0 shadow-sm transition-all duration-200 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-400/30 focus-visible:shadow-lg text-slate-900 dark:text-slate-100`;
+  const inputStyles = `w-full px-4 py-3 rounded-xl border-2 transition-all duration-200 outline-none shadow-sm ${
+    isDark
+      ? "bg-slate-800/60 border-slate-700 ring-1 ring-inset ring-slate-700 placeholder:text-slate-500 text-slate-100 focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-400/30 focus-visible:shadow-lg"
+      : "bg-white/90 border-slate-300 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 text-slate-900 focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-400/30 focus-visible:shadow-lg"
+  }`;
 
   const handleRenameDraft = (draftId: string) => {
     setRenameDraftId(draftId);
@@ -232,8 +239,8 @@ const PostJob = () => {
   };
 
   return (
-    <div className="px-2 sm:px-4 md:px-6 relative">
-      <div className="max-w-7xl mx-auto">
+    <div className="relative">
+      <div className="max-w-4xl mx-auto">
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 sm:gap-0">
@@ -242,10 +249,10 @@ const PostJob = () => {
                 <Plus className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">
+                <h1 className={`text-2xl sm:text-3xl font-bold ${theme.text.primary}`}>
                   Post New Job
                 </h1>
-                <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm sm:text-base">
+                <p className={`${theme.text.secondary} mt-1 text-sm sm:text-base`}>
                   Create a job listing to find the perfect candidate
                 </p>
               </div>
@@ -256,7 +263,11 @@ const PostJob = () => {
               {drafts.length > 0 && (
                 <button
                   onClick={() => setShowDrafts(!showDrafts)}
-                  className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium transition-colors w-full sm:w-auto"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 w-full sm:w-auto ${
+                    isDark
+                      ? "bg-slate-800 hover:bg-slate-700 text-slate-300"
+                      : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                  }`}
                 >
                   <Clock className="w-4 h-4" />
                   Drafts ({drafts.length})
@@ -266,7 +277,7 @@ const PostJob = () => {
                 <button
                   onClick={() => handleSaveDraft()}
                   disabled={savingDraft}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors w-full sm:w-auto"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl w-full sm:w-auto"
                 >
                   {savingDraft ? (
                     <>
@@ -294,7 +305,11 @@ const PostJob = () => {
 
           {/* Drafts Panel */}
           {showDrafts && (
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 mb-6 w-full max-w-full sm:max-w-lg">
+            <div className={`rounded-xl shadow-lg border backdrop-blur-xl mb-6 w-full max-w-full sm:max-w-lg ${
+              isDark 
+                ? "bg-slate-900/80 border-slate-800" 
+                : "bg-white/80 border-slate-200"
+            }`}>
               <div className="p-4 border-b border-slate-200 dark:border-slate-700">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                   Saved Drafts
@@ -375,29 +390,43 @@ const PostJob = () => {
           )}
 
           {pendingDraft && (
-            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-2 sm:p-4">
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-4 sm:p-6 shadow-xl border border-slate-200 dark:border-slate-700 w-full max-w-xs sm:max-w-sm">
-                <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-slate-100">Unsaved Changes</h3>
-                <p className="text-slate-600 dark:text-slate-400 mb-4">You have unsaved changes. Loading a draft will overwrite your current progress. Do you want to continue?</p>
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+              <div className={`rounded-xl p-4 sm:p-6 shadow-xl border backdrop-blur-xl w-full max-w-xs sm:max-w-sm ${
+                isDark 
+                  ? "bg-slate-900/95 border-slate-800" 
+                  : "bg-white/95 border-slate-200"
+              }`}>
+                <h3 className={`text-lg font-semibold mb-2 ${theme.text.primary}`}>Unsaved Changes</h3>
+                <p className={`${theme.text.secondary} mb-4`}>You have unsaved changes. Loading a draft will overwrite your current progress. Do you want to continue?</p>
                 <div className="flex gap-4 justify-end">
-                  <button className="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100" onClick={cancelLoadDraft}>Cancel</button>
-                  <button className="px-4 py-2 rounded-lg bg-blue-600 text-white" onClick={confirmLoadDraft}>Load Draft</button>
+                  <button className={`px-4 py-2 rounded-xl font-semibold transition-all duration-200 ${
+                    isDark
+                      ? "bg-slate-700 hover:bg-slate-600 text-slate-100"
+                      : "bg-slate-200 hover:bg-slate-300 text-slate-800"
+                  }`} onClick={cancelLoadDraft}>Cancel</button>
+                  <button className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all duration-200 shadow-lg hover:shadow-xl" onClick={confirmLoadDraft}>Load Draft</button>
                 </div>
               </div>
             </div>
           )}
 
           {/* Progress Bar */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 mb-6 shadow-sm border border-slate-200 dark:border-slate-700">
+          <div className={`rounded-xl p-4 mb-6 border backdrop-blur-xl shadow-lg ${
+            isDark 
+              ? "bg-slate-900/80 border-slate-800" 
+              : "bg-white/80 border-slate-200"
+          }`}>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+              <span className={`text-sm font-medium ${theme.text.primary}`}>
                 Form Progress
               </span>
-              <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <span className={`text-sm font-semibold ${theme.text.primary}`}>
                 {progress}%
               </span>
             </div>
-            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
+            <div className={`w-full rounded-full h-2.5 overflow-hidden ${
+              isDark ? "bg-slate-700" : "bg-slate-200"
+            }`}>
               <div
                 className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${progress}%` }}
@@ -410,13 +439,17 @@ const PostJob = () => {
 
         {/* Status Messages */}
         {success && (
-          <div className="mb-6 bg-white dark:bg-slate-800 rounded-xl p-4 border-l-4 border-emerald-500 flex items-start gap-4 shadow-sm">
+          <div className={`mb-6 rounded-xl p-4 border-l-4 border-emerald-500 flex items-start gap-4 shadow-lg backdrop-blur-xl ${
+            isDark 
+              ? "bg-slate-900/80 border-slate-800" 
+              : "bg-white/80 border-slate-200"
+          }`}>
             <CheckCircle className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" />
             <div>
-              <h3 className="text-emerald-600 font-semibold mb-1">
+              <h3 className={`text-emerald-600 dark:text-emerald-400 font-semibold mb-1`}>
                 Job Posted Successfully!
               </h3>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">
+              <p className={`${theme.text.secondary} text-sm`}>
                 Your job is now live and open for applications. Start reviewing potential candidates soon!
               </p>
             </div>
@@ -424,13 +457,17 @@ const PostJob = () => {
         )}
 
         {draftSaved && (
-          <div className="mb-6 bg-white dark:bg-slate-800 rounded-xl p-4 border-l-4 border-blue-500 flex items-start gap-4 shadow-sm">
+          <div className={`mb-6 rounded-xl p-4 border-l-4 border-blue-500 flex items-start gap-4 shadow-lg backdrop-blur-xl ${
+            isDark 
+              ? "bg-slate-900/80 border-slate-800" 
+              : "bg-white/80 border-slate-200"
+          }`}>
             <Save className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
             <div>
-              <h3 className="text-blue-600 font-semibold mb-1">
+              <h3 className={`text-blue-600 dark:text-blue-400 font-semibold mb-1`}>
                 Draft Saved Successfully!
               </h3>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">
+              <p className={`${theme.text.secondary} text-sm`}>
                 Your progress has been saved. You can continue editing anytime.
               </p>
             </div>
@@ -438,24 +475,32 @@ const PostJob = () => {
         )}
 
         {error && (
-          <div className="mb-6 bg-white dark:bg-slate-800 rounded-xl p-4 border-l-4 border-red-500 flex items-start gap-4 shadow-sm">
+          <div className={`mb-6 rounded-xl p-4 border-l-4 border-red-500 flex items-start gap-4 shadow-lg backdrop-blur-xl ${
+            isDark 
+              ? "bg-slate-900/80 border-slate-800" 
+              : "bg-white/80 border-slate-200"
+          }`}>
             <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
             <div>
-              <h3 className="text-red-600 font-semibold mb-1">Error</h3>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">{error}</p>
+              <h3 className={`text-red-600 dark:text-red-400 font-semibold mb-1`}>Error</h3>
+              <p className={`${theme.text.secondary} text-sm`}>{error}</p>
             </div>
           </div>
         )}
 
         {/* Main Form */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl overflow-hidden border border-slate-200 dark:border-slate-700">
+        <div className={`rounded-2xl shadow-xl overflow-hidden border backdrop-blur-xl ${
+          isDark 
+            ? "bg-slate-900/80 border-slate-800" 
+            : "bg-white/80 border-slate-200"
+        }`}>
           <div className="p-4 sm:p-8">
             <div className="space-y-8">
               {/* Basic Information Section */}
               <div>
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-3">
+                <h2 className={`text-xl font-semibold ${theme.text.primary} mb-6 flex items-center gap-3`}>
                   <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
-                    <Briefcase className="w-4 h-4 text-emerald-600" />
+                    <Briefcase className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   Basic Information
                 </h2>
@@ -463,7 +508,7 @@ const PostJob = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   {/* Job Title */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                    <label className={`text-sm font-medium ${theme.text.primary}`}>
                       Job Title *
                     </label>
                     <input
@@ -479,7 +524,7 @@ const PostJob = () => {
 
                   {/* Company */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                    <label className={`text-sm font-medium ${theme.text.primary}`}>
                       Company Name *
                     </label>
                     <input
@@ -496,7 +541,7 @@ const PostJob = () => {
 
                 {/* Location */}
                 <div className="mt-6 space-y-2">
-                  <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  <label className={`text-sm font-medium ${theme.text.primary}`}>
                     Location *
                   </label>
                   <input
@@ -513,15 +558,15 @@ const PostJob = () => {
 
               {/* Job Description Section */}
               <div>
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-3">
+                <h2 className={`text-xl font-semibold ${theme.text.primary} mb-6 flex items-center gap-3`}>
                   <div className="w-8 h-8 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center">
-                    <FileText className="w-4 h-4 text-teal-600" />
+                    <FileText className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                   </div>
                   Job Description
                 </h2>
 
                 <div className="space-y-3">
-                  <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  <label className={`text-sm font-medium ${theme.text.primary}`}>
                     Description *
                   </label>
                   <textarea
@@ -533,7 +578,7 @@ const PostJob = () => {
                     placeholder="Describe the role, responsibilities, requirements, and what makes this opportunity exciting..."
                     className={`${inputStyles} resize-none w-full`}
                   />
-                  <p className="text-slate-500 dark:text-slate-400 text-sm flex items-center gap-2">
+                  <p className={`${theme.text.muted} text-sm flex items-center gap-2`}>
                     <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
                     Include key responsibilities, required skills, and company culture
                   </p>
@@ -541,14 +586,20 @@ const PostJob = () => {
               </div>
 
               {/* Submit Section */}
-              <div className="pt-6 border-t border-slate-200 dark:border-slate-700">
+              <div className={`pt-6 border-t ${
+                isDark ? "border-slate-700" : "border-slate-200"
+              }`}>
                 <div className="flex flex-col sm:flex-row gap-4 items-center justify-end w-full">
                   {progress > 0 && progress < 100 && (
                     <button
                       type="button"
                       onClick={() => handleSaveDraft()}
                       disabled={savingDraft}
-                      className="flex items-center gap-2 px-6 py-3 bg-slate-600 hover:bg-slate-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
+                      className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto ${
+                        isDark
+                          ? "bg-slate-700 hover:bg-slate-600 text-white"
+                          : "bg-slate-600 hover:bg-slate-700 text-white"
+                      }`}
                     >
                       {savingDraft ? (
                         <>
@@ -566,7 +617,7 @@ const PostJob = () => {
                   <button
                     onClick={handleSubmit}
                     disabled={loading || progress < 100}
-                    className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white disabled:from-slate-600 disabled:to-slate-600 font-semibold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center gap-3 min-w-[160px] justify-center w-full sm:w-auto"
+                    className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white disabled:from-slate-600 disabled:to-slate-600 font-semibold py-3 px-8 rounded-xl transition-all duration-200 transform hover:scale-[1.02] hover:shadow-xl disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center gap-3 min-w-[160px] justify-center w-full sm:w-auto shadow-lg"
                   >
                     {loading ? (
                       <>
@@ -581,7 +632,7 @@ const PostJob = () => {
                     )}
                   </button>
                   {progress < 100 && !loading && (
-                    <p className="text-sm text-slate-500 dark:text-slate-400 w-full sm:w-auto text-center sm:text-left">
+                    <p className={`text-sm ${theme.text.muted} w-full sm:w-auto text-center sm:text-left`}>
                       Complete all fields to post your job
                     </p>
                   )}

@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 // Inner layout component that uses the sidebar context
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
-  const { getThemeClasses, getAnimatedBg } = useTheme();
+  const { getThemeClasses, getAnimatedBg, isDark } = useTheme();
   const { isCollapsed } = useSidebar();
   const [isClient, setIsClient] = useState(false);
   const theme = getThemeClasses;
@@ -18,12 +18,14 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const animatedBgClasses = isClient ? getAnimatedBg() : [];
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 relative ${theme.background}`}>
+    <div className={`min-h-screen transition-colors duration-300 relative ${isDark ? "bg-slate-950" : "bg-slate-50"}`}>
       {isClient && (
         <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
           {animatedBgClasses.map((className, index) => (
             <div key={`bg-${index}`} className={className}></div>
           ))}
+          {/* Grid Pattern */}
+          <div className={`absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] ${isDark ? "opacity-20" : "opacity-40"}`}></div>
         </div>
       )}
 
@@ -39,7 +41,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           }
         `}
       >
-        <div className="p-6 w-full h-full">
+        <div className="p-4 sm:p-6 w-full h-full">
           <div className={`min-h-full transition-colors duration-300`}>
             {children}
           </div>
