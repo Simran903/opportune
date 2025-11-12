@@ -274,13 +274,6 @@ export default function HomePage() {
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
               </Link>
-              <button className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-200 border-2 ${
-                isDark 
-                  ? "border-slate-700 text-slate-300 hover:border-slate-600 hover:text-white hover:bg-slate-800/50"
-                  : "border-slate-300 text-slate-700 hover:border-slate-400 hover:text-slate-900 hover:bg-slate-50"
-              }`}>
-                Watch Demo
-              </button>
             </div>
 
             {/* Stats */}
