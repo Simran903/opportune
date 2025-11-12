@@ -93,6 +93,12 @@ export const signIn = async (req, res) => {
       return;
     }
 
+    // Check if user is OAuth user (no password)
+    if (!user.password) {
+      res.status(400).json({ error: 'This account was created with Google. Please sign in with Google.' });
+      return;
+    }
+
     const comparePassword = await bcrypt.compare(password, user.password);
     if (!comparePassword) {
       res.status(404).json({ error: 'Invalid credentials.' });
@@ -156,6 +162,11 @@ export const updatePassword = async (req, res) => {
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) {
       return res.status(404).json({ error: "User not found" });
+    }
+
+    // Check if user is OAuth user (no password)
+    if (!user.password) {
+      return res.status(400).json({ error: "OAuth users cannot update password. Please use Google sign-in." });
     }
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);

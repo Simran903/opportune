@@ -5,12 +5,14 @@ import {
   updatePassword,
   userDetails,
 } from "../controllers/user.controller";
+import { googleSignIn } from "../controllers/google.controller";
 import { verifyToken } from "../middlewares/auth.middleware";
 
 const router = express.Router();
 
 router.post("/signup", signUp);
 router.post("/signin", signIn);
+router.post("/google", googleSignIn);
 router.get("/user-details", verifyToken as any, userDetails);
 router.post("/update-password", verifyToken as any, updatePassword);
 

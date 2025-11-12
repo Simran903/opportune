@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SidebarProvider } from "@/contexts/SidebarContext";
 import { SecurityProvider } from "@/contexts/SecurityContext";
 import SecurityAlerts from "@/components/SecurityAlerts";
+import GoogleProvider from "@/components/GoogleOAuthProvider";
 
 export const metadata: Metadata = {
   title: "Opportune - AI-Powered Hiring Platform",
@@ -34,19 +35,21 @@ export default function RootLayout({
           }}
         />
       </head>
-      <SecurityProvider>
-        <ThemeProvider>
-          <SidebarProvider>
-            <body
-              className={`antialiased`}
-              suppressHydrationWarning={true}
-            >
-              {children}
-              <SecurityAlerts />
-            </body>
-          </SidebarProvider>
-        </ThemeProvider>
-      </SecurityProvider>
+      <GoogleProvider>
+        <SecurityProvider>
+          <ThemeProvider>
+            <SidebarProvider>
+              <body
+                className={`antialiased`}
+                suppressHydrationWarning={true}
+              >
+                {children}
+                <SecurityAlerts />
+              </body>
+            </SidebarProvider>
+          </ThemeProvider>
+        </SecurityProvider>
+      </GoogleProvider>
     </html>
   );
 }

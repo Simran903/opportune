@@ -5,8 +5,9 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { Input } from "@/components/ui/input";
 import axiosClient from "@/lib/axiosClient";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, AlertCircle, MapPin, ArrowRight, Loader2 } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, MapPin, ArrowRight, Loader2, Mail, Lock, Sparkles } from "lucide-react";
 import { ThemeToggleButton } from "@/components/ThemeToggleButton";
+import { GoogleLogin } from '@react-oauth/google';
 import {
   TokenManager,
   InputSanitizer,
@@ -28,6 +29,7 @@ const SigninPage = () => {
     remainingAttempts: number;
     lockoutTime?: number;
   } | null>(null);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -125,47 +127,101 @@ const SigninPage = () => {
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    setGoogleLoading(true);
+    setError("");
+    
+    try {
+      const res = await axiosClient.post("/user/google", {
+        token: credentialResponse.credential,
+      });
+
+      const token = res.data?.accesstoken;
+      if (token) {
+        await TokenManager.storeToken(token);
+
+        SecurityLogger.logSecurityEvent("GOOGLE_LOGIN_SUCCESS", {
+          email: res.data?.user?.email,
+          timestamp: new Date().toISOString(),
+        });
+
+        router.push("/dashboard");
+      } else {
+        setError("Sign in successful but no token received.");
+        SecurityLogger.logSecurityEvent("GOOGLE_LOGIN_NO_TOKEN", {
+          email: res.data?.user?.email,
+        });
+      }
+    } catch (err: any) {
+      const errorMessage =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        "Google sign in failed. Please try again.";
+
+      setError(errorMessage);
+
+      SecurityLogger.logSecurityEvent("GOOGLE_LOGIN_FAILED", {
+        error: errorMessage,
+      });
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError("Google sign in was cancelled or failed.");
+    setGoogleLoading(false);
+    SecurityLogger.logSecurityEvent("GOOGLE_LOGIN_ERROR", {
+      error: "User cancelled or error occurred",
+    });
+  };
+
   return (
-    <div className={`min-h-screen transition-all duration-500 relative overflow-hidden ${isDark ? "bg-slate-950" : "bg-white"}`}>
-      {/* Subtle Background Elements */}
+    <div className={`min-h-screen transition-all duration-500 relative overflow-hidden ${isDark ? "bg-slate-950" : "bg-gradient-to-br from-slate-50 via-white to-emerald-50/30"}`}>
+      {/* Enhanced Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {getAnimatedBg().map((className, index) => (
           <div key={index} className={className}></div>
         ))}
-        {/* Grid Pattern */}
-        <div className={`absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] ${isDark ? "opacity-20" : "opacity-40"}`}></div>
+        {/* Animated Grid Pattern */}
+        <div className={`absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] ${isDark ? "opacity-20" : "opacity-30"} animate-pulse`}></div>
+        {/* Gradient Overlay */}
+        <div className={`absolute inset-0 bg-gradient-to-br ${isDark ? "from-slate-950/50 via-transparent to-emerald-950/20" : "from-transparent via-emerald-50/20 to-transparent"}`}></div>
       </div>
 
       {/* Theme Toggle */}
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed top-4 right-4 z-50 animate-in fade-in slide-in-from-top-4 duration-500">
         <ThemeToggleButton />
       </div>
 
       <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 relative z-10 py-12">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-8 duration-700">
           {/* Logo/Brand */}
-          <div className="text-center mb-8">
-            <Link href="/" className="inline-flex items-center space-x-2 mb-6">
-              <div className="p-1.5 rounded-lg bg-gradient-to-br from-emerald-600 to-teal-600">
-                <MapPin className="w-5 h-5 text-white" />
+          <div className="text-center mb-10">
+            <Link href="/" className="inline-flex items-center space-x-3 mb-8 group">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 shadow-lg shadow-emerald-500/30 group-hover:shadow-xl group-hover:shadow-emerald-500/40 transition-all duration-300 group-hover:scale-110">
+                <MapPin className="w-6 h-6 text-white" />
               </div>
-              <span className={`text-2xl font-bold ${theme.text.primary}`}>
-                Opportune
-              </span>
+              <div className="flex items-center space-x-2">
+                <span className={`text-3xl font-bold bg-gradient-to-r ${isDark ? "from-emerald-400 to-teal-400" : "from-emerald-600 to-teal-600"} bg-clip-text text-transparent`}>
+                  Opportune
+                </span>
+                <Sparkles className={`w-5 h-5 ${isDark ? "text-emerald-400" : "text-emerald-600"} animate-pulse`} />
+              </div>
             </Link>
-            <h1 className={`text-3xl sm:text-4xl font-bold mb-2 ${theme.text.primary}`}>
+            <h1 className={`text-4xl sm:text-5xl font-bold mb-3 ${theme.text.primary} tracking-tight`}>
               Welcome back
             </h1>
-            <p className={`text-base ${theme.text.secondary}`}>
+            <p className={`text-base sm:text-lg ${theme.text.secondary} font-medium`}>
               Sign in to your account to continue
             </p>
           </div>
 
           {/* Form Card */}
-          <div className={`w-full p-8 rounded-2xl border backdrop-blur-xl shadow-xl ${
+          <div className={`w-full p-8 sm:p-10 rounded-3xl border backdrop-blur-xl shadow-2xl transition-all duration-300 hover:shadow-3xl ${
             isDark 
-              ? "bg-slate-900/80 border-slate-800" 
-              : "bg-white/80 border-slate-200"
+              ? "bg-slate-900/90 border-slate-800/50 shadow-slate-900/50" 
+              : "bg-white/90 border-slate-200/50 shadow-slate-200/50"
           }`}>
 
             {/* Rate limit warning */}
@@ -197,44 +253,56 @@ const SigninPage = () => {
                 </div>
               )}
 
-            <form className="space-y-5" onSubmit={handleSubmit}>
-              <div>
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <div className="space-y-2">
                 <label
-                  className={`block mb-2 font-medium text-sm ${theme.text.primary}`}
+                  className={`block mb-2 font-semibold text-sm ${theme.text.primary} flex items-center space-x-2`}
                   htmlFor="email"
                 >
-                  Email
-                </label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  className="w-full"
-                  autoComplete="email"
-                  required
-                  disabled={
-                    loading || (rateLimitInfo ? !rateLimitInfo.allowed : false)
-                  }
-                />
-              </div>
-              <div>
-                <label
-                  className={`block mb-2 font-medium text-sm ${theme.text.primary}`}
-                  htmlFor="password"
-                >
-                  Password
+                  <Mail className="w-4 h-4" />
+                  <span>Email</span>
                 </label>
                 <div className="relative">
+                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <Mail className={`w-5 h-5 ${isDark ? "text-slate-500" : "text-slate-400"}`} />
+                  </div>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    className="w-full pl-12"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    required
+                    disabled={
+                      loading || (rateLimitInfo ? !rateLimitInfo.allowed : false)
+                    }
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label
+                  className={`block mb-2 font-semibold text-sm ${theme.text.primary} flex items-center space-x-2`}
+                  htmlFor="password"
+                >
+                  <Lock className="w-4 h-4" />
+                  <span>Password</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <Lock className={`w-5 h-5 ${isDark ? "text-slate-500" : "text-slate-400"}`} />
+                  </div>
                   <Input
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
                     value={form.password}
                     onChange={handleChange}
-                    className="w-full pr-10"
+                    className="w-full pl-12 pr-12"
                     autoComplete="current-password"
+                    placeholder="Enter your password"
                     required
                     disabled={
                       loading || (rateLimitInfo ? !rateLimitInfo.allowed : false)
@@ -243,10 +311,10 @@ const SigninPage = () => {
                   <button
                     type="button"
                     onClick={togglePasswordVisibility}
-                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 rounded-lg transition-colors duration-200 ${
+                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 p-2 rounded-lg transition-all duration-200 ${
                       isDark 
-                        ? "hover:bg-slate-800 text-slate-400" 
-                        : "hover:bg-slate-100 text-slate-500"
+                        ? "hover:bg-slate-800 text-slate-400 hover:text-slate-300" 
+                        : "hover:bg-slate-100 text-slate-500 hover:text-slate-700"
                     }`}
                     aria-label={showPassword ? "Hide password" : "Show password"}
                     disabled={
@@ -254,48 +322,75 @@ const SigninPage = () => {
                     }
                   >
                     {showPassword ? (
-                      <EyeOff className="w-4 h-4" />
+                      <EyeOff className="w-5 h-5" />
                     ) : (
-                      <Eye className="w-4 h-4" />
+                      <Eye className="w-5 h-5" />
                     )}
                   </button>
                 </div>
               </div>
 
               {error && (
-                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-center space-x-2">
-                  <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-                  <span className="text-sm text-red-700 dark:text-red-300">{error}</span>
+                <div className="p-4 bg-red-50 dark:bg-red-900/30 border-2 border-red-200 dark:border-red-800/50 rounded-xl flex items-start space-x-3 animate-in slide-in-from-top-2 duration-300 shadow-sm">
+                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm font-medium text-red-700 dark:text-red-300 flex-1">{error}</span>
                 </div>
               )}
 
               <button
                 type="submit"
-                className={`w-full py-3 rounded-xl font-semibold transition-all duration-200 mt-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`w-full py-3.5 rounded-xl font-semibold transition-all duration-300 mt-8 bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-700 hover:via-emerald-600 hover:to-teal-700 text-white shadow-lg hover:shadow-xl hover:shadow-emerald-500/30 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98]`}
                 disabled={
                   loading || (rateLimitInfo ? !rateLimitInfo.allowed : false)
                 }
               >
                 {loading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-5 h-5 animate-spin" />
                     <span>Signing In...</span>
                   </>
                 ) : (
                   <>
                     <span>Sign In</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
               </button>
             </form>
 
+            {/* Divider */}
+            <div className="relative my-8">
+              <div className="absolute inset-0 flex items-center">
+                <div className={`w-full border-t ${isDark ? "border-slate-700/50" : "border-slate-300/50"}`}></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className={`px-4 ${theme.text.secondary} bg-inherit font-medium`}>Or continue with</span>
+              </div>
+            </div>
+
+            {/* Google Sign In Button */}
+            <div className="flex justify-center mb-6">
+              <div className="w-full transform transition-transform hover:scale-[1.02] active:scale-[0.98]">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  useOneTap={false}
+                  theme={isDark ? "filled_black" : "outline"}
+                  size="large"
+                  text="signin_with"
+                  shape="rectangular"
+                  logo_alignment="left"
+                  width="100%"
+                />
+              </div>
+            </div>
+
             {/* Sign Up Link */}
-            <p className={`mt-6 text-center text-sm ${theme.text.secondary}`}>
+            <p className={`mt-8 text-center text-sm ${theme.text.secondary} font-medium`}>
               Don&apos;t have an account?{" "}
               <Link
                 href="/auth/signup"
-                className={`font-semibold text-emerald-600 dark:text-emerald-400 hover:underline transition-colors`}
+                className={`font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 underline-offset-4 hover:underline transition-all duration-200`}
               >
                 Sign up
               </Link>
