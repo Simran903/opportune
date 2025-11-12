@@ -8,13 +8,13 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Settings,
   LogOut,
   Key,
-  MoreVertical,
   Check,
   Eye,
   EyeOff,
+  Mail,
+  ChevronUp,
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useSidebar } from "@/contexts/SidebarContext";
@@ -35,6 +35,7 @@ export const Sidebar = () => {
   );
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
     newPassword: "",
@@ -67,7 +68,7 @@ export const Sidebar = () => {
           if (token && TokenManager.isTokenValid(token)) {
             const decoded: any = jwtDecode(token);
             setUser({ name: decoded.name, email: decoded.email });
-            
+
             // Log user session
             SecurityLogger.logSecurityEvent('USER_SESSION_ACTIVE', {
               userId: decoded.id,
@@ -102,7 +103,7 @@ export const Sidebar = () => {
           pathname,
           timestamp: new Date().toISOString(),
         });
-        
+
         // Clear user data and redirect to login
         setUser(null);
         TokenManager.removeToken();
@@ -113,7 +114,7 @@ export const Sidebar = () => {
 
     // Check session every 5 minutes
     const sessionCheckInterval = setInterval(checkSession, 5 * 60 * 1000);
-    
+
     // Also check on user activity
     const handleUserActivity = () => {
       SessionManager.updateActivity();
@@ -154,7 +155,11 @@ export const Sidebar = () => {
       await TokenManager.removeToken();
       SessionManager.endSession();
       setUser(null);
-      
+
+      // Close the confirm dialog
+      setShowSignOutConfirm(false);
+      setShowUserMenu(false);
+
       router.push("/");
     }
   };
@@ -180,7 +185,7 @@ export const Sidebar = () => {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword,
       });
-      
+
       setShowPasswordModal(false);
       setPasswordForm({
         currentPassword: "",
@@ -188,7 +193,7 @@ export const Sidebar = () => {
         confirmPassword: "",
       });
       setShowSuccessToast(true);
-      
+
       // Log password update
       SecurityLogger.logSecurityEvent('PASSWORD_UPDATED', {
         userId: user?.email,
@@ -204,7 +209,7 @@ export const Sidebar = () => {
       } else {
         setPasswordError("Failed to update password");
       }
-      
+
       // Log password update failure
       SecurityLogger.logSecurityEvent('PASSWORD_UPDATE_FAILED', {
         userId: user?.email,
@@ -271,6 +276,42 @@ export const Sidebar = () => {
           className="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
           onClick={toggleMobile}
         />
+      )}
+
+      {/* Sign Out Confirm Dialog */}
+      {showSignOutConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div
+            className={`${getThemeClasses.nav} rounded-lg p-6 w-full max-w-md border border-slate-700/50`}
+          >
+            <h3
+              className={`text-lg font-semibold ${getThemeClasses.text.primary} mb-2`}
+            >
+              Confirm Sign Out
+            </h3>
+            <p className={`text-sm ${getThemeClasses.text.secondary} mb-6`}>
+              Are you sure you want to sign out? You will need to log in again to access your account.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSignOutConfirm(false);
+                }}
+                className={`flex-1 px-4 py-2 rounded-lg ${getThemeClasses.button.ghost} transition-colors duration-200`}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="flex-1 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors duration-200"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Password Update Modal */}
@@ -432,10 +473,9 @@ export const Sidebar = () => {
         className={`
           fixed inset-y-0 left-0 z-50 
           ${isCollapsed ? "w-16" : "w-64"} 
-          ${
-            isMobileOpen
-              ? "translate-x-0"
-              : "-translate-x-full md:translate-x-0"
+          ${isMobileOpen
+            ? "translate-x-0"
+            : "-translate-x-full md:translate-x-0"
           }
           transition-all duration-300 ease-in-out
           ${getThemeClasses.nav} backdrop-blur-xl border-r border-slate-700/50
@@ -445,9 +485,8 @@ export const Sidebar = () => {
         <div className="relative z-10">
           {/* Header */}
           <div
-            className={`relative flex items-center ${
-              isCollapsed ? "pl-4" : "pl-6"
-            } p-4 border-b border-slate-700/50 h-16`}
+            className={`relative flex items-center ${isCollapsed ? "pl-4" : "pl-6"
+              } p-4 border-b border-slate-700/50 h-16`}
           >
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-400 flex items-center justify-center flex-shrink-0">
@@ -493,15 +532,13 @@ export const Sidebar = () => {
                     href={item.url}
                     className={`
                       flex items-center rounded-lg
-                      ${
-                        isCollapsed
-                          ? "justify-center p-3"
-                          : "space-x-3 px-3 py-2.5"
+                      ${isCollapsed
+                        ? "justify-center p-3"
+                        : "space-x-3 px-3 py-2.5"
                       }
-                      ${
-                        isActive
-                          ? "bg-emerald-600/20 text-emerald-400 border border-emerald-500/30"
-                          : getThemeClasses.button.ghost
+                      ${isActive
+                        ? "bg-emerald-600/20 text-emerald-400 border border-emerald-500/30"
+                        : getThemeClasses.button.ghost
                       }
                       hover:bg-slate-100 dark:hover:bg-slate-700
                       relative overflow-hidden
@@ -514,24 +551,22 @@ export const Sidebar = () => {
                   >
                     <div className="relative">
                       <item.icon
-                        className={`w-5 h-5 ${
-                          isActive
+                        className={`w-5 h-5 ${isActive
                             ? "text-emerald-400"
                             : getThemeClasses.accent.emerald
-                        } transition-colors duration-200`}
+                          } transition-colors duration-200`}
                       />
                     </div>
 
                     {!isCollapsed && (
                       <span
-                        className={`${
-                          isActive
+                        className={`${isActive
                             ? "text-emerald-400 font-medium"
                             : getThemeClasses.text.secondary
-                        } group-hover:${getThemeClasses.text.primary.replace(
-                          "text-",
-                          "text-"
-                        )} transition-colors duration-200 flex-1`}
+                          } group-hover:${getThemeClasses.text.primary.replace(
+                            "text-",
+                            "text-"
+                          )} transition-colors duration-200 flex-1`}
                       >
                         {item.title}
                       </span>
@@ -552,16 +587,14 @@ export const Sidebar = () => {
 
         {/* Footer */}
         <div
-          className={`border-t border-slate-700/50 ${
-            isCollapsed ? "p-2" : "p-4"
-          } relative z-10`}
+          className={`border-t border-slate-700/50 ${isCollapsed ? "p-2" : "p-4"
+            } relative z-10`}
         >
           {/* Theme toggle */}
           <div className="relative group mb-2">
             <div
-              className={`w-full flex items-center ${
-                isCollapsed ? "pl-0" : "pl-2"
-              }`}
+              className={`w-full flex items-center ${isCollapsed ? "pl-0" : "pl-2"
+                }`}
             >
               <ThemeToggleButton className="border-none shadow-none" />
               {!isCollapsed && (
@@ -580,12 +613,13 @@ export const Sidebar = () => {
           {/* User profile with dropdown */}
           <div className="relative group">
             <div
-              className={`flex items-center rounded-lg cursor-pointer transition-all duration-200 ${
-                isCollapsed ? "justify-center p-3" : "space-x-3 px-3 py-2.5"
-              } ${getThemeClasses.button.ghost}`}
+              className={`flex items-center rounded-lg cursor-pointer transition-all duration-200 ${isCollapsed ? "justify-center p-3" : "space-x-3 px-3 py-2.5"
+                } ${getThemeClasses.button.ghost} ${showUserMenu ? "bg-emerald-500/10 ring-2 ring-emerald-500/30" : ""
+                } hover:bg-emerald-500/5`}
               onClick={() => setShowUserMenu(!showUserMenu)}
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-400 flex items-center justify-center flex-shrink-0">
+              <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-400 flex items-center justify-center flex-shrink-0 transition-all duration-200 ${showUserMenu ? "ring-2 ring-emerald-500/50 scale-105" : ""
+                }`}>
                 <span className="text-white font-bold text-sm">
                   {(user?.email && user?.email.charAt(0).toUpperCase()) || "G"}
                 </span>
@@ -593,18 +627,18 @@ export const Sidebar = () => {
               {!isCollapsed && (
                 <>
                   <div className="flex-1 min-w-0">
+
                     <div
-                      className={`text-sm font-medium ${getThemeClasses.text.primary} truncate`}
+                      className={`text-xs ${getThemeClasses.text.muted} truncate flex items-center gap-1`}
                     >
-                      {user?.name}
-                    </div>
-                    <div
-                      className={`text-xs ${getThemeClasses.text.muted} truncate`}
-                    >
+
                       {user?.email || "Not signed in"}
                     </div>
                   </div>
-                  <MoreVertical className="w-4 h-4 text-gray-400" />
+                  <ChevronUp
+                    className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showUserMenu ? "rotate-180" : ""
+                      }`}
+                  />
                 </>
               )}
             </div>
@@ -612,27 +646,42 @@ export const Sidebar = () => {
             {/* User menu dropdown */}
             {showUserMenu && !isCollapsed && (
               <div
-                className={`absolute bottom-full left-0 right-0 mb-2 ${getThemeClasses.nav} border border-slate-700/50 rounded-lg shadow-lg overflow-hidden`}
+                className={`absolute bottom-full left-0 right-0 mb-2 ${getThemeClasses.nav} border border-slate-700/50 rounded-lg shadow-xl overflow-hidden backdrop-blur-xl`}
               >
-                <button
-                  onClick={() => {
-                    setShowPasswordModal(true);
-                    setShowUserMenu(false);
-                  }}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 text-left ${getThemeClasses.button.ghost} transition-colors duration-200`}
-                >
-                  <Key className="w-4 h-4" />
-                  <span className={`text-sm ${getThemeClasses.text.secondary}`}>
-                    Update Password
-                  </span>
-                </button>
-                <button
-                  onClick={handleSignOut}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 text-left ${getThemeClasses.button.ghost} hover:bg-red-500/10 hover:text-red-400 transition-colors duration-200`}
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span className="text-sm">Sign Out</span>
-                </button>
+                {/* Menu Items */}
+                <div className="py-1">
+                  <button
+                    onClick={() => {
+                      setShowPasswordModal(true);
+                      setShowUserMenu(false);
+                    }}
+                    className={`w-full flex items-center space-x-3 px-4 py-2.5 text-left ${getThemeClasses.button.ghost} hover:bg-emerald-500/10 hover:text-emerald-400 transition-all duration-200 group`}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+                      <Key className="w-4 h-4 text-emerald-400" />
+                    </div>
+                    <span className={`text-sm font-medium ${getThemeClasses.text.secondary} group-hover:text-emerald-400 transition-colors`}>
+                      Update Password
+                    </span>
+                  </button>
+
+                  <div className="h-px bg-slate-700/50 my-1 mx-4" />
+
+                  <button
+                    onClick={() => {
+                      setShowSignOutConfirm(true);
+                      setShowUserMenu(false);
+                    }}
+                    className={`w-full flex items-center space-x-3 px-4 py-2.5 text-left ${getThemeClasses.button.ghost} hover:bg-red-500/10 hover:text-red-400 transition-all duration-200 group`}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center group-hover:bg-red-500/20 transition-colors">
+                      <LogOut className="w-4 h-4 text-red-400" />
+                    </div>
+                    <span className="text-sm font-medium text-slate-400 group-hover:text-red-400 transition-colors">
+                      Sign Out
+                    </span>
+                  </button>
+                </div>
               </div>
             )}
 
@@ -649,27 +698,42 @@ export const Sidebar = () => {
             {/* Collapsed state user menu */}
             {isCollapsed && showUserMenu && (
               <div
-                className={`absolute left-full top-0 ml-2 ${getThemeClasses.nav} border border-slate-700/50 rounded-lg shadow-lg overflow-hidden whitespace-nowrap`}
+                className={`absolute left-full top-0 ml-2 ${getThemeClasses.nav} border border-slate-700/50 rounded-lg shadow-xl overflow-hidden whitespace-nowrap backdrop-blur-xl`}
               >
-                <button
-                  onClick={() => {
-                    setShowPasswordModal(true);
-                    setShowUserMenu(false);
-                  }}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 text-left ${getThemeClasses.button.ghost} transition-colors duration-200`}
-                >
-                  <Key className="w-4 h-4" />
-                  <span className={`text-sm ${getThemeClasses.text.secondary}`}>
-                    Update Password
-                  </span>
-                </button>
-                <button
-                  onClick={handleSignOut}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 text-left ${getThemeClasses.button.ghost} hover:bg-red-500/10 hover:text-red-400 transition-colors duration-200`}
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span className="text-sm">Sign Out</span>
-                </button>
+                {/* Menu Items */}
+                <div className="py-1">
+                  <button
+                    onClick={() => {
+                      setShowPasswordModal(true);
+                      setShowUserMenu(false);
+                    }}
+                    className={`w-full flex items-center space-x-3 px-4 py-2.5 text-left ${getThemeClasses.button.ghost} hover:bg-emerald-500/10 hover:text-emerald-400 transition-all duration-200 group`}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+                      <Key className="w-4 h-4 text-emerald-400" />
+                    </div>
+                    <span className={`text-sm font-medium ${getThemeClasses.text.secondary} group-hover:text-emerald-400 transition-colors`}>
+                      Update Password
+                    </span>
+                  </button>
+
+                  <div className="h-px bg-slate-700/50 my-1 mx-4" />
+
+                  <button
+                    onClick={() => {
+                      setShowSignOutConfirm(true);
+                      setShowUserMenu(false);
+                    }}
+                    className={`w-full flex items-center space-x-3 px-4 py-2.5 text-left ${getThemeClasses.button.ghost} hover:bg-red-500/10 hover:text-red-400 transition-all duration-200 group`}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center group-hover:bg-red-500/20 transition-colors">
+                      <LogOut className="w-4 h-4 text-red-400" />
+                    </div>
+                    <span className="text-sm font-medium text-slate-400 group-hover:text-red-400 transition-colors">
+                      Sign Out
+                    </span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
