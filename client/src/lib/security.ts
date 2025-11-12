@@ -388,11 +388,6 @@ class SecurityLogger {
     }
     
     sessionStorage.setItem('security_logs', JSON.stringify(logs));
-    
-    // Console log for development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Security Event:', logEntry);
-    }
   }
 
   static getSecurityLogs(): any[] {

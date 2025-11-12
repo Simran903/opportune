@@ -198,9 +198,6 @@ const PostJob = () => {
         handleDeleteDraft(currentDraftId);
         setCurrentDraftId(null);
       }
-
-      // Optional: Redirect to dashboard or show success message
-      console.log('Job posted successfully:', response.data);
     } catch (err: any) {
       console.error("Error posting job:", err);
       const errorMessage = err.response?.data?.message || "Something went wrong. Please try again.";
