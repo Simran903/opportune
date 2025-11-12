@@ -369,8 +369,8 @@ const SigninPage = () => {
             </div>
 
             {/* Google Sign In Button */}
-            <div className="flex justify-center mb-6">
-              <div className="w-full transform transition-transform hover:scale-[1.02] active:scale-[0.98]">
+            <div className="flex justify-center items-center mb-6">
+              <div className="w-full flex justify-center transform transition-transform hover:scale-[1.02] active:scale-[0.98]">
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
                   onError={handleGoogleError}
