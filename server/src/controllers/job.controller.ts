@@ -39,21 +39,14 @@ export const addJob = async (req, res) => {
     });
 
     axios
-      .post("http://localhost:10000/scrape", {
+      .post("http://127.0.0.1:10000/scrape", {
         description,
         employer_id: userId,
-      })
-      .then(async (response) => {
-        const candidates = response.data.profiles || [];
-
-        for (const candidate of candidates) {
-          await prisma.candidate.create({
-            data: {
-              profileUrl: candidate.profileUrl,
-              job: { connect: { id: job.id } },
-            },
-          });
-        }
+        job_id: job.id,
+      }, { timeout: 5 * 60 * 1000 })
+      .then((response) => {
+        const count = response.data?.profiles?.length ?? 0;
+        console.log(`Scraper matched ${count} candidates for job ${job.id}`);
       })
       .catch((err) => {
         console.error(
@@ -87,8 +80,16 @@ export const getAllJobs = async (req, res) => {
     });
 
     return res.status(200).json({ jobs });
-  } catch (error) {
-    console.error("Error fetching job:", error);
+  } catch (error: any) {
+    console.error("Error fetching jobs:", error);
+
+    const code = error?.code ?? error?.errorCode;
+    if (code === "P2024" || code === "P1001" || error?.name === "PrismaClientInitializationError") {
+      return res.status(503).json({
+        message: "Database is temporarily unavailable. Please try again shortly.",
+      });
+    }
+
     return res.status(500).json({ message: "Internal server error." });
   }
 };
@@ -146,9 +147,15 @@ export const removeJob = async (req, res) => {
   }
 };
 
+const normalizeLinkedInUrl = (url: string): string | null => {
+  const match = url.match(/linkedin\.com\/in\/([^/?&#]+)/i);
+  if (!match?.[1]) return null;
+  return `https://www.linkedin.com/in/${match[1].toLowerCase()}`;
+};
+
 export const saveProfiles = async (req, res) => {
   const { id } = req.params;
-  const { profiles } = req.body;
+  const { profiles, jobId: requestedJobId } = req.body;
 
   if (!profiles || !Array.isArray(profiles)) {
     return res.status(400).json({ message: "Profiles must be an array" });
@@ -160,21 +167,42 @@ export const saveProfiles = async (req, res) => {
       return res.status(400).json({ message: "Invalid employer ID." });
     }
 
-    const latestJob = await prisma.job.findFirst({
-      where: { userId: employerId },
-      orderBy: { createdAt: "desc" },
-    });
+    let targetJob = null;
 
-    if (!latestJob) {
+    if (requestedJobId) {
+      const parsedJobId = parseInt(requestedJobId);
+      if (!isNaN(parsedJobId)) {
+        targetJob = await prisma.job.findFirst({
+          where: { id: parsedJobId, userId: employerId },
+        });
+      }
+    }
+
+    if (!targetJob) {
+      targetJob = await prisma.job.findFirst({
+        where: { userId: employerId },
+        orderBy: { createdAt: "desc" },
+      });
+    }
+
+    if (!targetJob) {
       return res
         .status(404)
         .json({ message: "No job found for this employer." });
     }
 
+    const uniqueProfiles = new Map<string, string>();
+    for (const profile of profiles) {
+      const normalized = normalizeLinkedInUrl(profile.profileUrl);
+      if (normalized) {
+        uniqueProfiles.set(normalized, normalized);
+      }
+    }
+
     const result = await prisma.candidate.createMany({
-      data: profiles.map((profile) => ({
-        profileUrl: profile.profileUrl,
-        jobId: latestJob.id,
+      data: Array.from(uniqueProfiles.values()).map((profileUrl) => ({
+        profileUrl,
+        jobId: targetJob.id,
       })),
       skipDuplicates: true,
     });
@@ -194,6 +222,7 @@ export const saveProfiles = async (req, res) => {
 
 export const getSeenProfiles = async (req, res) => {
   const { id } = req.params;
+  const { jobId: requestedJobId } = req.query;
 
   try {
     const employerId = parseInt(id);
@@ -201,18 +230,33 @@ export const getSeenProfiles = async (req, res) => {
       return res.status(400).json({ message: "Invalid employer ID." });
     }
 
+    const where: {
+      job: { userId: number; id?: number };
+    } = {
+      job: { userId: employerId },
+    };
+
+    if (requestedJobId) {
+      const parsedJobId = parseInt(requestedJobId as string);
+      if (!isNaN(parsedJobId)) {
+        where.job.id = parsedJobId;
+      }
+    }
+
     const candidates = await prisma.candidate.findMany({
-      where: {
-        job: {
-          userId: employerId,
-        },
-      },
+      where,
       select: {
         profileUrl: true,
       },
     });
 
-    const seenProfiles = candidates.map((c) => c.profileUrl);
+    const seenProfiles = Array.from(
+      new Set(
+        candidates
+          .map((c) => normalizeLinkedInUrl(c.profileUrl))
+          .filter((url): url is string => Boolean(url))
+      )
+    );
 
     return res.status(200).json({ seenProfiles });
   } catch (error) {

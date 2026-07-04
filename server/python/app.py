@@ -21,11 +21,12 @@ app.add_middleware(
 class Job(BaseModel):
     description: str
     employer_id: int
+    job_id: int
 
 @app.post("/scrape")
 def scrape(job: Job):
     try:
-        profiles = fetch_profiles(job.description, job.employer_id)
+        profiles = fetch_profiles(job.description, job.employer_id, job.job_id)
         return {"profiles": profiles}
     except Exception as e:
         return {"error": str(e)}
