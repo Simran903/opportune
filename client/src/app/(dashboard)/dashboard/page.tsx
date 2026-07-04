@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import {
   Loader2,
   AlertCircle,
@@ -14,11 +14,12 @@ import {
   Users,
   ExternalLink,
   X,
+  RefreshCw,
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Input } from "@/components/ui/input";
 import axiosClient from "@/lib/axiosClient";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface Candidate {
   id: number;
@@ -28,24 +29,45 @@ interface Candidate {
 }
 
 interface Job {
-  id: string;
+  id: number;
   title: string;
   company: string;
   location: string;
   description: string;
   createdAt: string;
-  status: "active" | "inactive" | "draft";
+  status?: "active" | "inactive" | "draft";
   candidates: Candidate[];
 }
+
+const parseJobsResponse = (data: unknown): Job[] => {
+  if (Array.isArray(data)) return data as Job[];
+  if (data && typeof data === "object") {
+    const payload = data as { jobs?: Job[]; data?: Job[] };
+    if (Array.isArray(payload.jobs)) return payload.jobs;
+    if (Array.isArray(payload.data)) return payload.data;
+  }
+  return [];
+};
+
+const jobNeedsCandidates = (job: Job) => {
+  const candidateCount = job.candidates?.length ?? 0;
+  const createdAt = new Date(job.createdAt).getTime();
+  const isRecent = Date.now() - createdAt < 15 * 60 * 1000;
+  return candidateCount === 0 && isRecent;
+};
 
 const Jobs = () => {
   const { getThemeClasses, isDark } = useTheme();
   const theme = getThemeClasses;
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const forceMatching = searchParams.get("matching") === "1";
 
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [isMatching, setIsMatching] = useState(forceMatching);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -58,35 +80,86 @@ const Jobs = () => {
   const [jobDetailsLoading, setJobDetailsLoading] = useState(false);
   const [jobDetailsError, setJobDetailsError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const response = await axiosClient.get("/job/job");
+  const pollAttempts = useRef(0);
 
-        // Ensure we're getting an array from the response
-        const jobsData = Array.isArray(response.data)
-          ? response.data
-          : Array.isArray(response.data.jobs)
-            ? response.data.jobs
-            : Array.isArray(response.data.data)
-              ? response.data.data
-              : [];
+  const fetchJobs = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    try {
+      const response = await axiosClient.get("/job/job");
+      const jobsData = parseJobsResponse(response.data);
 
-        setJobs(jobsData);
-        setFilteredJobs(jobsData);
-        setLoading(false);
-      } catch (err: any) {
-        console.error("Error fetching jobs:", err);
-        setError(err.response?.data?.message || "Failed to fetch jobs");
-        setLoading(false);
-        // Set empty arrays to prevent filter errors
+      setJobs(jobsData);
+      setFilteredJobs(jobsData);
+      setError(null);
+
+      const shouldKeepMatching =
+        forceMatching || jobsData.some(jobNeedsCandidates);
+      setIsMatching(shouldKeepMatching);
+
+      return { jobsData, ok: true as const };
+    } catch (err: any) {
+      console.error("Error fetching jobs:", err);
+      const message =
+        err.response?.status === 503 || err.response?.status === 500
+          ? err.response?.data?.message ||
+            "Could not reach the database. Please wait a moment and try again."
+          : err.response?.data?.message || "Failed to fetch jobs";
+
+      setError(message);
+      if (!isRefresh) {
         setJobs([]);
         setFilteredJobs([]);
       }
+      setIsMatching(false);
+      return { jobsData: [], ok: false as const };
+    } finally {
+      setLoading(false);
+      if (isRefresh) setRefreshing(false);
+    }
+  }, [forceMatching]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    pollAttempts.current = 0;
+    let consecutiveErrors = 0;
+    const pollIntervalMs = 15000;
+    const maxAttempts = 16;
+
+    const loadAndMaybePoll = async () => {
+      const isRefresh = pollAttempts.current > 0;
+      const result = await fetchJobs(isRefresh);
+      if (cancelled) return;
+
+      if (!result.ok) {
+        consecutiveErrors += 1;
+        if (consecutiveErrors < 3 && pollAttempts.current < maxAttempts) {
+          pollAttempts.current += 1;
+          timeoutId = setTimeout(loadAndMaybePoll, pollIntervalMs * 2);
+        }
+        return;
+      }
+
+      consecutiveErrors = 0;
+      const { jobsData } = result;
+      const needsPoll =
+        forceMatching || jobsData.some(jobNeedsCandidates);
+
+      if (needsPoll && pollAttempts.current < maxAttempts) {
+        pollAttempts.current += 1;
+        timeoutId = setTimeout(loadAndMaybePoll, pollIntervalMs);
+      } else if (!jobsData.some(jobNeedsCandidates)) {
+        setIsMatching(false);
+      }
     };
 
-    fetchJobs();
-  }, []);
+    loadAndMaybePoll();
+
+    return () => {
+      cancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [fetchJobs, forceMatching]);
 
   // Filter jobs based on search term
   useEffect(() => {
@@ -229,65 +302,93 @@ const Jobs = () => {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 sm:gap-0">
             <div className="flex items-center gap-4">
-              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl shadow-lg">
+              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-glow">
                 <Briefcase className="w-6 h-6 text-white" />
               </div>
               <div>
+                <p className="eyebrow text-emerald-600 dark:text-emerald-400 mb-1">Dashboard</p>
                 <h1
-                  className={`text-2xl sm:text-3xl font-bold ${theme.text.primary}`}
+                  className={`text-2xl sm:text-3xl font-semibold ${theme.text.primary}`}
                 >
                   Manage Jobs
                 </h1>
-                <p
-                  className={`${theme.text.secondary} mt-1 text-sm sm:text-base`}
-                >
-                  View and manage your job listings
+              </div>
+            </div>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <button
+                onClick={() => fetchJobs(true)}
+                disabled={refreshing}
+                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 border ${
+                  isDark
+                    ? "bg-white/5 border-white/10 text-slate-200 hover:bg-white/10"
+                    : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                } disabled:opacity-50`}
+              >
+                <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+                Refresh
+              </button>
+              <button
+                className={`btn-shine bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 shadow-glow hover:-translate-y-0.5 active:scale-95 w-full sm:w-auto`}
+                onClick={() => router.push("/post-job")}
+              >
+                <Plus className="w-4 h-4" />
+                Post New Job
+              </button>
+            </div>
+          </div>
+
+          {isMatching && (
+            <div className={`mb-6 rounded-2xl p-4 border flex items-center gap-3 ${
+              isDark
+                ? "bg-emerald-500/10 border-emerald-500/30"
+                : "bg-emerald-50 border-emerald-200"
+            }`}>
+              <Loader2 className="w-5 h-5 text-emerald-500 animate-spin flex-shrink-0" />
+              <div>
+                <p className={`text-sm font-semibold ${theme.text.primary}`}>
+                  Finding candidates…
+                </p>
+                <p className={`text-xs ${theme.text.secondary}`}>
+                  AI matching runs in the background and can take 1–3 minutes. This page refreshes automatically.
                 </p>
               </div>
             </div>
-            <button
-              className={`bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl w-full sm:w-auto`}
-              onClick={() => router.push("/post-job")}
-            >
-              <Plus className="w-4 h-4" />
-              Post New Job
-            </button>
-          </div>
+          )}
 
           {/* Stats */}
           <div className="grid md:grid-cols-2 grid-cols-1 gap-4 mb-6">
-            <div className={`rounded-xl p-6 border backdrop-blur-xl shadow-lg transition-all duration-200 hover:shadow-xl ${
-              isDark 
-                ? "bg-slate-900/80 border-slate-800" 
-                : "bg-white/80 border-slate-200"
+            <div className={`hover-lift rounded-2xl p-6 border backdrop-blur-xl ${
+              isDark
+                ? "bg-white/[0.03] border-white/10"
+                : "bg-white/70 border-slate-200/80"
             }`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className={`${theme.text.muted} text-sm font-medium mb-1`}>Total Jobs</p>
-                  <p className={`${theme.text.primary} text-3xl font-bold`}>
+                  <p className={`eyebrow ${theme.text.muted} mb-2`}>Total Jobs</p>
+                  <p className={`${theme.text.primary} text-3xl font-display font-semibold`}>
                     {jobs.length}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-500/15 rounded-2xl flex items-center justify-center">
                   <Briefcase className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                 </div>
               </div>
             </div>
-            <div className={`rounded-xl p-6 border backdrop-blur-xl shadow-lg transition-all duration-200 hover:shadow-xl ${
-              isDark 
-                ? "bg-slate-900/80 border-slate-800" 
-                : "bg-white/80 border-slate-200"
+            <div className={`hover-lift rounded-2xl p-6 border backdrop-blur-xl ${
+              isDark
+                ? "bg-white/[0.03] border-white/10"
+                : "bg-white/70 border-slate-200/80"
             }`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className={`${theme.text.muted} text-sm font-medium mb-1`}>
+                  <p className={`eyebrow ${theme.text.muted} mb-2`}>
                     Total Candidates
                   </p>
-                  <p className={`${theme.text.primary} text-3xl font-bold`}>
+                  <p className={`${theme.text.primary} text-3xl font-display font-semibold`}>
                     {getTotalCandidates()}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-500/15 rounded-2xl flex items-center justify-center">
                   <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
@@ -296,10 +397,10 @@ const Jobs = () => {
         </div>
 
         {/* Filters and Search */}
-        <div className={`rounded-xl p-4 sm:p-6 mb-6 border backdrop-blur-xl shadow-lg ${
-          isDark 
-            ? "bg-slate-900/80 border-slate-800" 
-            : "bg-white/80 border-slate-200"
+        <div className={`rounded-2xl p-4 sm:p-5 mb-6 border backdrop-blur-xl shadow-soft ${
+          isDark
+            ? "bg-white/[0.03] border-white/10"
+            : "bg-white/70 border-slate-200/80"
         }`}>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
@@ -319,17 +420,17 @@ const Jobs = () => {
 
         {/* Jobs Grid */}
         {filteredJobs.length === 0 ? (
-          <div className={`rounded-xl p-8 sm:p-12 text-center border backdrop-blur-xl shadow-lg ${
-            isDark 
-              ? "bg-slate-900/80 border-slate-800" 
-              : "bg-white/80 border-slate-200"
+          <div className={`rounded-2xl p-8 sm:p-12 text-center border backdrop-blur-xl shadow-soft ${
+            isDark
+              ? "bg-white/[0.03] border-white/10"
+              : "bg-white/70 border-slate-200/80"
           }`}>
             <div className={`w-16 h-16 ${
-              isDark ? "bg-slate-800" : "bg-slate-100"
-            } rounded-full flex items-center justify-center mx-auto mb-4`}>
+              isDark ? "bg-white/5" : "bg-slate-100"
+            } rounded-2xl flex items-center justify-center mx-auto mb-4`}>
               <Briefcase className="w-8 h-8 text-slate-400" />
             </div>
-            <h3 className={`${theme.text.primary} text-lg font-semibold mb-2`}>
+            <h3 className={`${theme.text.primary} text-lg font-display font-semibold mb-2`}>
               {jobs.length === 0 ? "No jobs posted yet" : "No jobs found"}
             </h3>
             <p className={`${theme.text.secondary} mb-6`}>
@@ -339,7 +440,7 @@ const Jobs = () => {
             </p>
             {jobs.length === 0 && (
               <button
-                className={`bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl w-full sm:w-auto`}
+                className={`btn-shine bg-gradient-to-br from-emerald-500 to-teal-600 text-white inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-glow hover:-translate-y-0.5 active:scale-95`}
                 onClick={() => router.push("/post-job")}
               >
                 <Plus className="w-4 h-4" />
@@ -352,16 +453,16 @@ const Jobs = () => {
             {filteredJobs.map((job) => (
               <div
                 key={job.id}
-                className={`rounded-xl p-4 sm:p-6 border backdrop-blur-xl shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-[1.02] group ${
-                  isDark 
-                    ? "bg-slate-900/80 border-slate-800 hover:border-emerald-500/50" 
-                    : "bg-white/80 border-slate-200 hover:border-emerald-200"
+                className={`hover-lift rounded-2xl p-5 sm:p-6 border backdrop-blur-xl group ${
+                  isDark
+                    ? "bg-white/[0.03] border-white/10 hover:border-emerald-500/40"
+                    : "bg-white/70 border-slate-200/80 hover:border-emerald-300/70"
                 }`}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <h3
-                      className={`${theme.text.primary} font-semibold text-lg mb-2 line-clamp-2`}
+                      className={`${theme.text.primary} font-display font-semibold text-lg mb-2 line-clamp-2`}
                     >
                       {job.title}
                     </h3>
@@ -413,16 +514,18 @@ const Jobs = () => {
 
                   <div className="flex items-center gap-2">
                     <button
-                      className={`p-2 rounded-lg ${theme.button.ghost} hover:bg-emerald-100 dark:hover:bg-emerald-900/30`}
+                      className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 transition-all duration-200 hover:bg-emerald-500/20 hover:scale-110 active:scale-95"
                       onClick={() => handleViewJobDetails(job.id)}
+                      aria-label="View job details"
                     >
-                      <Eye className="w-4 h-4 text-emerald-600" />
+                      <Eye className="w-4 h-4" />
                     </button>
                     <button
-                      className={`p-2 rounded-lg ${theme.button.ghost} hover:bg-red-100 dark:hover:bg-red-900/30`}
+                      className="p-2.5 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 transition-all duration-200 hover:bg-red-500/20 hover:scale-110 active:scale-95"
                       onClick={() => handleDeleteJob(job)}
+                      aria-label="Delete job"
                     >
-                      <Trash2 className="w-4 h-4 text-red-600" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -435,9 +538,9 @@ const Jobs = () => {
         {showDeleteModal && jobToDelete && (
           <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
             <div
-              className={`rounded-xl w-full max-w-xs sm:max-w-md border backdrop-blur-xl shadow-xl ${
-                isDark 
-                  ? "bg-slate-900/95 border-slate-800" 
+              className={`animate-scale-in rounded-2xl w-full max-w-xs sm:max-w-md border backdrop-blur-xl shadow-elevated ${
+                isDark
+                  ? "bg-slate-900/95 border-white/10"
                   : "bg-white/95 border-slate-200"
               }`}
             >
@@ -514,9 +617,9 @@ const Jobs = () => {
         {showCandidatesModal && selectedJob && (
           <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
             <div
-              className={`rounded-xl w-full max-w-md sm:max-w-2xl max-h-[80vh] overflow-hidden border backdrop-blur-xl shadow-xl ${
-                isDark 
-                  ? "bg-slate-900/95 border-slate-800" 
+              className={`animate-scale-in rounded-2xl w-full max-w-md sm:max-w-2xl max-h-[80vh] overflow-hidden border backdrop-blur-xl shadow-elevated ${
+                isDark
+                  ? "bg-slate-900/95 border-white/10"
                   : "bg-white/95 border-slate-200"
               }`}
             >
@@ -608,9 +711,9 @@ const Jobs = () => {
         {/* Job Details Modal */}
         {showJobDetailsModal && (
           <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
-            <div className={`rounded-xl w-full max-w-md sm:max-w-2xl max-h-[80vh] overflow-hidden border backdrop-blur-xl shadow-xl ${
-              isDark 
-                ? "bg-slate-900/95 border-slate-800" 
+            <div className={`animate-scale-in rounded-2xl w-full max-w-md sm:max-w-2xl max-h-[80vh] overflow-hidden border backdrop-blur-xl shadow-elevated ${
+              isDark
+                ? "bg-slate-900/95 border-white/10"
                 : "bg-white/95 border-slate-200"
             }`}>
               <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
@@ -711,4 +814,18 @@ const Jobs = () => {
   );
 };
 
-export default Jobs;
+function DashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="animate-spin w-6 h-6 text-emerald-500" />
+        </div>
+      }
+    >
+      <Jobs />
+    </Suspense>
+  );
+}
+
+export default DashboardPage;

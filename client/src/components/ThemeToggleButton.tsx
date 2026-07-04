@@ -12,18 +12,27 @@ export const ThemeToggleButton: FC<ThemeToggleButtonProps> = ({ className }) => 
   return (
     <button
       onClick={toggleTheme}
-      className={`p-3 rounded-full transition-all duration-300 hover:scale-110 ${isDark
-        ? "bg-slate-800/80 hover:bg-slate-700/80 text-yellow-400"
-        : "bg-white/80 hover:bg-white text-slate-800"
-        } backdrop-blur-sm border ${isDark ? "border-slate-700/50" : "border-white/50"
-        } shadow-lg ${className}`}
+      className={`group relative p-3 rounded-full transition-all duration-300 hover:scale-110 active:scale-95 overflow-hidden ${isDark
+        ? "bg-white/5 hover:bg-white/10 text-amber-300"
+        : "bg-white/80 hover:bg-white text-slate-700"
+        } backdrop-blur-md border ${isDark ? "border-white/10" : "border-slate-200/80"
+        } shadow-soft ${className}`}
       title="Toggle theme"
+      aria-label="Toggle theme"
     >
-      {isDark ? (
-        <Sun className="w-5 h-5" strokeWidth={2} />
-      ) : (
-        <Moon className="w-5 h-5" strokeWidth={2} />
-      )}
+      <span
+        className={`absolute inset-0 rounded-full bg-gradient-to-br transition-opacity duration-300 ${isDark
+          ? "from-amber-400/20 to-orange-500/10"
+          : "from-emerald-400/15 to-teal-500/10"
+          } opacity-0 group-hover:opacity-100`}
+      />
+      <span className="relative block transition-transform duration-500 group-hover:rotate-[18deg]">
+        {isDark ? (
+          <Sun className="w-5 h-5" strokeWidth={2} />
+        ) : (
+          <Moon className="w-5 h-5" strokeWidth={2} />
+        )}
+      </span>
     </button>
   );
 };

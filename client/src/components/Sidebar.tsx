@@ -488,12 +488,12 @@ export const Sidebar = () => {
             className={`relative flex items-center ${isCollapsed ? "pl-4" : "pl-6"
               } p-4 border-b border-slate-700/50 h-16`}
           >
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-400 flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold text-sm">O</span>
+            <div className="flex items-center space-x-2.5">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-glow">
+                <span className="text-white font-display font-bold text-sm">O</span>
               </div>
               {!isCollapsed && (
-                <span className="font-bold text-lg bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
+                <span className="font-display font-semibold text-lg text-gradient">
                   Opportune
                 </span>
               )}
@@ -531,18 +531,17 @@ export const Sidebar = () => {
                   <Link
                     href={item.url}
                     className={`
-                      flex items-center rounded-lg
+                      flex items-center rounded-xl font-medium
                       ${isCollapsed
                         ? "justify-center p-3"
                         : "space-x-3 px-3 py-2.5"
                       }
                       ${isActive
-                        ? "bg-emerald-600/20 text-emerald-400 border border-emerald-500/30"
-                        : getThemeClasses.button.ghost
+                        ? "bg-gradient-to-r from-emerald-500/20 to-teal-500/10 text-emerald-500 dark:text-emerald-300 border border-emerald-500/30 shadow-soft"
+                        : `${getThemeClasses.button.ghost} border border-transparent`
                       }
-                      hover:bg-slate-100 dark:hover:bg-slate-700
                       relative overflow-hidden
-                      transition-all duration-200
+                      transition-all duration-300 hover:translate-x-0.5
                     `}
                     onClick={() => {
                       // Close mobile menu on navigation

@@ -71,7 +71,7 @@ const SecurityAlerts: React.FC = () => {
         return (
           <div
             key={alert.id}
-            className={`${styles.container} border rounded-lg p-4 shadow-lg backdrop-blur-sm animate-in slide-in-from-top-2 duration-300`}
+            className={`${styles.container} border rounded-2xl p-4 shadow-elevated backdrop-blur-xl animate-scale-in`}
           >
             <div className="flex items-start space-x-3">
               <div className={`flex-shrink-0 ${styles.icon}`}>
@@ -79,7 +79,7 @@ const SecurityAlerts: React.FC = () => {
               </div>
               
               <div className="flex-1 min-w-0">
-                <h4 className={`text-sm font-medium ${styles.title}`}>
+                <h4 className={`text-sm font-display font-semibold ${styles.title}`}>
                   {alert.title}
                 </h4>
                 <p className={`text-sm mt-1 ${styles.text}`}>

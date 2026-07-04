@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SidebarProvider } from "@/contexts/SidebarContext";
@@ -6,9 +7,28 @@ import { SecurityProvider } from "@/contexts/SecurityContext";
 import SecurityAlerts from "@/components/SecurityAlerts";
 import GoogleProvider from "@/components/GoogleOAuthProvider";
 
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Opportune - AI-Powered Hiring Platform",
-  description: "Connect with India's top tech talent through AI-powered candidate matching",
+  title: "Opportune — AI-Powered Hiring Platform",
+  description:
+    "Connect with India's top tech talent through AI-powered candidate matching",
 };
 
 export default function RootLayout({
@@ -17,7 +37,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning={true}>
+    <html
+      lang="en"
+      suppressHydrationWarning={true}
+      className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -39,10 +63,7 @@ export default function RootLayout({
         <SecurityProvider>
           <ThemeProvider>
             <SidebarProvider>
-              <body
-                className={`antialiased`}
-                suppressHydrationWarning={true}
-              >
+              <body className="font-sans antialiased" suppressHydrationWarning={true}>
                 {children}
                 <SecurityAlerts />
               </body>

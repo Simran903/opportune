@@ -5,7 +5,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { Input } from "@/components/ui/input";
 import axiosClient from "@/lib/axiosClient";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, AlertCircle, MapPin, ArrowRight, Loader2, Mail, Lock, Sparkles } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, MapPin, ArrowRight, Loader2, Mail, Lock } from "lucide-react";
 import { ThemeToggleButton } from "@/components/ThemeToggleButton";
 import { GoogleLogin } from '@react-oauth/google';
 import {
@@ -177,16 +177,13 @@ const SigninPage = () => {
   };
 
   return (
-    <div className={`min-h-screen transition-all duration-500 relative overflow-hidden ${isDark ? "bg-slate-950" : "bg-gradient-to-br from-slate-50 via-white to-emerald-50/30"}`}>
-      {/* Enhanced Background Elements */}
+    <div className={`min-h-screen transition-all duration-500 relative overflow-hidden ${isDark ? "bg-black" : "bg-gradient-to-br from-slate-50 via-white to-emerald-50/30"}`}>
+      {/* Ambient Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {getAnimatedBg().map((className, index) => (
           <div key={index} className={className}></div>
         ))}
-        {/* Animated Grid Pattern */}
-        <div className={`absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] ${isDark ? "opacity-20" : "opacity-30"} animate-pulse`}></div>
-        {/* Gradient Overlay */}
-        <div className={`absolute inset-0 bg-gradient-to-br ${isDark ? "from-slate-950/50 via-transparent to-emerald-950/20" : "from-transparent via-emerald-50/20 to-transparent"}`}></div>
+        <div className="absolute inset-0 bg-grid"></div>
       </div>
 
       {/* Theme Toggle */}
@@ -198,30 +195,27 @@ const SigninPage = () => {
         <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-8 duration-700">
           {/* Logo/Brand */}
           <div className="text-center mb-10">
-            <Link href="/" className="inline-flex items-center space-x-3 mb-8 group">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 shadow-lg shadow-emerald-500/30 group-hover:shadow-xl group-hover:shadow-emerald-500/40 transition-all duration-300 group-hover:scale-110">
+            <Link href="/" className="inline-flex items-center gap-3 mb-8 group">
+              <div className="p-2.5 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-glow transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
                 <MapPin className="w-6 h-6 text-white" />
               </div>
-              <div className="flex items-center space-x-2">
-                <span className={`text-3xl font-bold bg-gradient-to-r ${isDark ? "from-emerald-400 to-teal-400" : "from-emerald-600 to-teal-600"} bg-clip-text text-transparent`}>
-                  Opportune
-                </span>
-                <Sparkles className={`w-5 h-5 ${isDark ? "text-emerald-400" : "text-emerald-600"} animate-pulse`} />
-              </div>
+              <span className="text-3xl font-display font-semibold tracking-tight text-gradient">
+                Opportune
+              </span>
             </Link>
-            <h1 className={`text-4xl sm:text-5xl font-bold mb-3 ${theme.text.primary} tracking-tight`}>
+            <h1 className={`text-4xl sm:text-5xl font-semibold mb-3 ${theme.text.primary}`}>
               Welcome back
             </h1>
-            <p className={`text-base sm:text-lg ${theme.text.secondary} font-medium`}>
+            <p className={`text-base sm:text-lg ${theme.text.secondary}`}>
               Sign in to your account to continue
             </p>
           </div>
 
           {/* Form Card */}
-          <div className={`w-full p-8 sm:p-10 rounded-3xl border backdrop-blur-xl shadow-2xl transition-all duration-300 hover:shadow-3xl ${
-            isDark 
-              ? "bg-slate-900/90 border-slate-800/50 shadow-slate-900/50" 
-              : "bg-white/90 border-slate-200/50 shadow-slate-200/50"
+          <div className={`w-full p-8 sm:p-10 rounded-3xl border backdrop-blur-xl shadow-elevated transition-all duration-300 ${
+            isDark
+              ? "bg-slate-900/80 border-white/10"
+              : "bg-white/85 border-slate-200/70"
           }`}>
 
             {/* Rate limit warning */}
@@ -339,7 +333,7 @@ const SigninPage = () => {
 
               <button
                 type="submit"
-                className={`w-full py-3.5 rounded-xl font-semibold transition-all duration-300 mt-8 bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-700 hover:via-emerald-600 hover:to-teal-700 text-white shadow-lg hover:shadow-xl hover:shadow-emerald-500/30 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98]`}
+                className={`btn-shine group w-full py-3.5 rounded-xl font-semibold transition-all duration-300 mt-8 bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-glow flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 hover:-translate-y-0.5 active:scale-[0.98]`}
                 disabled={
                   loading || (rateLimitInfo ? !rateLimitInfo.allowed : false)
                 }

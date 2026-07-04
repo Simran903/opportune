@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
   Briefcase,
   FileText,
@@ -33,6 +34,7 @@ interface DraftJob extends FormData {
 const PostJob = () => {
   const { getThemeClasses, isDark } = useTheme();
   const theme = getThemeClasses;
+  const router = useRouter();
   const [formData, setFormData] = useState<FormData>({
     title: "",
     description: "",
@@ -198,6 +200,8 @@ const PostJob = () => {
         handleDeleteDraft(currentDraftId);
         setCurrentDraftId(null);
       }
+
+      router.push("/dashboard?matching=1");
     } catch (err: any) {
       console.error("Error posting job:", err);
       const errorMessage = err.response?.data?.message || "Something went wrong. Please try again.";
@@ -217,10 +221,10 @@ const PostJob = () => {
   };
 
   // Common input styles for consistency
-  const inputStyles = `w-full px-4 py-3 rounded-xl border-2 transition-all duration-200 outline-none shadow-sm ${
+  const inputStyles = `w-full px-4 py-3 rounded-xl border transition-all duration-300 outline-none backdrop-blur-sm shadow-soft ${
     isDark
-      ? "bg-slate-800/60 border-slate-700 ring-1 ring-inset ring-slate-700 placeholder:text-slate-500 text-slate-100 focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-400/30 focus-visible:shadow-lg"
-      : "bg-white/90 border-slate-300 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 text-slate-900 focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-400/30 focus-visible:shadow-lg"
+      ? "bg-white/[0.03] border-white/10 placeholder:text-slate-500 text-slate-100 hover:border-white/20 focus-visible:border-emerald-400/60 focus-visible:ring-4 focus-visible:ring-emerald-500/15"
+      : "bg-white/80 border-slate-200 placeholder:text-slate-400 text-slate-900 hover:border-slate-300 focus-visible:border-emerald-500/70 focus-visible:ring-4 focus-visible:ring-emerald-500/15"
   }`;
 
   const handleRenameDraft = (draftId: string) => {
@@ -242,16 +246,14 @@ const PostJob = () => {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 sm:gap-0">
             <div className="flex items-center gap-4">
-              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl shadow-lg">
+              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-glow">
                 <Plus className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className={`text-2xl sm:text-3xl font-bold ${theme.text.primary}`}>
+                <p className="eyebrow text-emerald-600 dark:text-emerald-400 mb-1">Create Listing</p>
+                <h1 className={`text-2xl sm:text-3xl font-semibold ${theme.text.primary}`}>
                   Post New Job
                 </h1>
-                <p className={`${theme.text.secondary} mt-1 text-sm sm:text-base`}>
-                  Create a job listing to find the perfect candidate
-                </p>
               </div>
             </div>
 
@@ -408,16 +410,16 @@ const PostJob = () => {
           )}
 
           {/* Progress Bar */}
-          <div className={`rounded-xl p-4 mb-6 border backdrop-blur-xl shadow-lg ${
-            isDark 
-              ? "bg-slate-900/80 border-slate-800" 
-              : "bg-white/80 border-slate-200"
+          <div className={`rounded-2xl p-4 mb-6 border backdrop-blur-xl shadow-soft ${
+            isDark
+              ? "bg-white/[0.03] border-white/10"
+              : "bg-white/70 border-slate-200/80"
           }`}>
             <div className="flex items-center justify-between mb-2">
-              <span className={`text-sm font-medium ${theme.text.primary}`}>
+              <span className={`eyebrow ${theme.text.muted}`}>
                 Form Progress
               </span>
-              <span className={`text-sm font-semibold ${theme.text.primary}`}>
+              <span className={`text-sm font-mono font-semibold ${theme.accent.emerald}`}>
                 {progress}%
               </span>
             </div>
@@ -486,10 +488,10 @@ const PostJob = () => {
         )}
 
         {/* Main Form */}
-        <div className={`rounded-2xl shadow-xl overflow-hidden border backdrop-blur-xl ${
-          isDark 
-            ? "bg-slate-900/80 border-slate-800" 
-            : "bg-white/80 border-slate-200"
+        <div className={`rounded-3xl shadow-soft overflow-hidden border backdrop-blur-xl ${
+          isDark
+            ? "bg-white/[0.03] border-white/10"
+            : "bg-white/70 border-slate-200/80"
         }`}>
           <div className="p-4 sm:p-8">
             <div className="space-y-8">
@@ -614,7 +616,7 @@ const PostJob = () => {
                   <button
                     onClick={handleSubmit}
                     disabled={loading || progress < 100}
-                    className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white disabled:from-slate-600 disabled:to-slate-600 font-semibold py-3 px-8 rounded-xl transition-all duration-200 transform hover:scale-[1.02] hover:shadow-xl disabled:hover:scale-100 disabled:cursor-not-allowed flex items-center gap-3 min-w-[160px] justify-center w-full sm:w-auto shadow-lg"
+                    className="btn-shine bg-gradient-to-br from-emerald-500 to-teal-600 text-white disabled:from-slate-500 disabled:to-slate-500 disabled:shadow-none font-semibold py-3 px-8 rounded-xl transition-all duration-300 hover:-translate-y-0.5 active:scale-95 disabled:hover:translate-y-0 disabled:cursor-not-allowed flex items-center gap-3 min-w-[160px] justify-center w-full sm:w-auto shadow-glow"
                   >
                     {loading ? (
                       <>

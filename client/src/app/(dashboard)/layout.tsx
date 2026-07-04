@@ -18,7 +18,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const animatedBgClasses = isClient ? getAnimatedBg() : [];
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 relative ${isDark ? "bg-slate-950" : "bg-slate-50"}`}>
+    <div className={`min-h-screen transition-colors duration-300 relative ${isDark ? "bg-black" : "bg-slate-50"}`}>
       {isClient && (
         <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
           {animatedBgClasses.map((className, index) => (

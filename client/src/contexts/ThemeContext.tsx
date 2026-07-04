@@ -24,45 +24,43 @@ export const useTheme = () => {
 
 export const getThemeClasses = (isDark: boolean) => ({
   background: isDark
-    ? "bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900"
-    : "bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-100",
+    ? "bg-black"
+    : "bg-gradient-to-br from-slate-50 via-white to-emerald-50/40",
   card: isDark
-    ? "bg-slate-800/50 border-slate-700/50 hover:bg-slate-800/80"
-    : "bg-white/50 border-white/50 hover:bg-white/80",
+    ? "bg-white/[0.04] border-white/10 hover:bg-white/[0.06]"
+    : "bg-white/70 border-slate-200/70 hover:bg-white/90",
   nav: isDark
-    ? "bg-slate-800/80 border-slate-700/50"
-    : "bg-white/80 border-white/40",
+    ? "bg-black/70 border-white/10"
+    : "bg-white/80 border-slate-200/70",
   text: {
-    primary: isDark ? "text-white" : "text-slate-900",
-    secondary: isDark ? "text-slate-300" : "text-slate-600",
-    muted: isDark ? "text-slate-400" : "text-slate-500",
+    primary: isDark ? "text-slate-50" : "text-slate-900",
+    secondary: isDark ? "text-slate-300/90" : "text-slate-600",
+    muted: isDark ? "text-slate-400/80" : "text-slate-500",
   },
   button: {
     primary:
-      "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white",
+      "bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white shadow-glow",
     secondary: isDark
-      ? "bg-slate-700 hover:bg-slate-600 text-white"
-      : "bg-slate-100 hover:bg-slate-200 text-slate-900",
+      ? "bg-white/5 hover:bg-white/10 text-slate-100 border border-white/10"
+      : "bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-200",
     ghost: isDark
       ? "bg-transparent hover:bg-white/10 text-slate-300 hover:text-white"
-      : "bg-transparent hover:bg-slate/10 text-slate-700 hover:text-slate-900",
+      : "bg-transparent hover:bg-slate-100 text-slate-700 hover:text-slate-900",
   },
   input: isDark
-    ? "bg-slate-800/50 border-slate-700/50 text-white placeholder-slate-400 focus:bg-slate-800/80"
-    : "bg-white/50 border-white/50 text-slate-900 placeholder-slate-500 focus:bg-white/80",
+    ? "bg-slate-900/60 border-white/10 text-white placeholder-slate-500 focus:bg-slate-900/80"
+    : "bg-white/70 border-slate-200 text-slate-900 placeholder-slate-400 focus:bg-white",
   accent: {
     emerald: isDark ? "text-emerald-400" : "text-emerald-600",
     teal: isDark ? "text-teal-400" : "text-teal-600",
     cyan: isDark ? "text-cyan-400" : "text-cyan-600",
   },
   badge: isDark
-    ? "bg-emerald-900/50 text-emerald-400"
-    : "bg-emerald-100 text-emerald-700",
+    ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"
+    : "bg-emerald-50 text-emerald-700 border border-emerald-200/70",
 });
 
-const getInitialTheme = (): boolean => {
-  if (typeof window === "undefined") return true;
-
+const resolvePreferredTheme = (): boolean => {
   try {
     const savedTheme = localStorage.getItem("opportune-theme");
     if (savedTheme !== null) {
@@ -74,7 +72,7 @@ const getInitialTheme = (): boolean => {
       return window.matchMedia("(prefers-color-scheme: dark)").matches;
     }
   } catch (e) {
-    console.warn("Failed to get theme from localStorage:", e);
+    console.warn("Failed to read theme preference:", e);
   }
 
   return true; // Default to dark
@@ -85,15 +83,14 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [isDark, setIsDark] = useState<boolean>(getInitialTheme);
+  // Deterministic default so the server render and the first client render
+  // match (avoids hydration mismatch). The real preference is applied on mount.
+  const [isDark, setIsDark] = useState<boolean>(true);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", isDark);
-  }, []);
-
-  useEffect(() => {
     setIsClient(true);
+    setIsDark(resolvePreferredTheme());
   }, []);
 
   useEffect(() => {
@@ -113,17 +110,17 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     if (!isClient) return [];
 
     return [
-      `absolute -top-10 -right-10 w-48 sm:w-72 h-48 sm:h-72 rounded-full blur-3xl animate-pulse ${isDark
-        ? "bg-gradient-to-br from-emerald-600/20 to-teal-600/20"
-        : "bg-gradient-to-br from-emerald-400/20 to-teal-400/20"
+      `absolute -top-24 -right-16 w-72 sm:w-[32rem] h-72 sm:h-[32rem] rounded-full blur-[110px] animate-aurora ${isDark
+        ? "bg-gradient-to-br from-emerald-500/25 to-teal-600/20"
+        : "bg-gradient-to-br from-emerald-300/40 to-teal-300/30"
       }`,
-      `absolute top-1/2 -left-10 sm:-left-20 w-64 sm:w-96 h-64 sm:h-96 rounded-full blur-3xl animate-pulse delay-1000 ${isDark
-        ? "bg-gradient-to-br from-cyan-600/15 to-emerald-600/15"
-        : "bg-gradient-to-br from-cyan-400/15 to-emerald-400/15"
+      `absolute top-1/3 -left-16 sm:-left-24 w-80 sm:w-[36rem] h-80 sm:h-[36rem] rounded-full blur-[120px] animate-aurora [animation-delay:-6s] ${isDark
+        ? "bg-gradient-to-br from-cyan-500/18 to-emerald-500/18"
+        : "bg-gradient-to-br from-cyan-300/30 to-emerald-300/25"
       }`,
-      `absolute bottom-10 right-1/4 sm:right-1/3 w-48 sm:w-64 h-48 sm:h-64 rounded-full blur-3xl animate-pulse delay-2000 ${isDark
-        ? "bg-gradient-to-br from-teal-600/20 to-cyan-600/20"
-        : "bg-gradient-to-br from-teal-400/20 to-cyan-400/20"
+      `absolute -bottom-20 right-1/4 sm:right-1/3 w-64 sm:w-[28rem] h-64 sm:h-[28rem] rounded-full blur-[110px] animate-aurora [animation-delay:-12s] ${isDark
+        ? "bg-gradient-to-br from-teal-500/22 to-cyan-600/18"
+        : "bg-gradient-to-br from-teal-300/35 to-cyan-300/25"
       }`,
     ];
   };
