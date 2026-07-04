@@ -463,45 +463,6 @@ export default function HomePage() {
 
       {/* Footer Section */}
       <footer className="relative z-10 border-t border-slate-200/70 dark:border-white/10">
-        {/* Newsletter Section */}
-        <div className="container mx-auto px-4 sm:px-6 py-16">
-          <div className={`max-w-4xl mx-auto text-center rounded-3xl border p-10 sm:p-14 ${
-            isDark ? "bg-white/[0.03] border-white/10" : "bg-white/70 border-slate-200/80"
-          } shadow-soft`}>
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border backdrop-blur-sm bg-white/50 dark:bg-white/[0.04] border-emerald-500/30 mb-6 shadow-soft">
-              <Mail className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span className="eyebrow text-emerald-700 dark:text-emerald-300">
-                Stay updated
-              </span>
-            </div>
-
-            <h3 className={`text-3xl sm:text-4xl font-semibold mb-4 ${theme.text.primary}`}>
-              Get the latest hiring insights
-            </h3>
-
-            <p className={`text-lg mb-8 ${theme.text.secondary}`}>
-              Join 500+ hiring managers who get weekly insights on Indian tech talent
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className={`flex-1 h-12 px-5 rounded-xl border transition-all duration-300 outline-none focus:ring-4 focus:ring-emerald-500/15 focus:border-emerald-500/60 ${
-                  isDark
-                    ? "bg-white/[0.03] border-white/10 text-white placeholder-slate-500"
-                    : "bg-white border-slate-200 text-slate-900 placeholder-slate-400"
-                }`}
-              />
-              <button
-                className="btn-shine h-12 px-6 rounded-xl font-semibold transition-all duration-300 hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2 bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-glow"
-              >
-                <span>Subscribe</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
 
         {/* Main Footer Content */}
         <div className="container mx-auto px-4 sm:px-6 py-12">
