@@ -250,7 +250,7 @@ const Jobs = () => {
     return lastSegment || "Unknown";
   };
 
-  const handleViewJobDetails = async (jobId: string) => {
+  const handleViewJobDetails = async (jobId: number) => {
     setShowJobDetailsModal(true);
     setJobDetails(null);
     setJobDetailsLoading(true);
