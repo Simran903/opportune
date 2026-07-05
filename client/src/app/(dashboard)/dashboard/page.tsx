@@ -92,9 +92,12 @@ const Jobs = () => {
       setFilteredJobs(jobsData);
       setError(null);
 
-      const shouldKeepMatching =
-        forceMatching || jobsData.some(jobNeedsCandidates);
-      setIsMatching(shouldKeepMatching);
+      const hasPendingJobs = jobsData.some(jobNeedsCandidates);
+      setIsMatching(hasPendingJobs);
+
+      if (!hasPendingJobs && forceMatching) {
+        router.replace("/dashboard", { scroll: false });
+      }
 
       return { jobsData, ok: true as const };
     } catch (err: any) {
@@ -116,7 +119,7 @@ const Jobs = () => {
       setLoading(false);
       if (isRefresh) setRefreshing(false);
     }
-  }, [forceMatching]);
+  }, [forceMatching, router]);
 
   useEffect(() => {
     let cancelled = false;
@@ -142,13 +145,12 @@ const Jobs = () => {
 
       consecutiveErrors = 0;
       const { jobsData } = result;
-      const needsPoll =
-        forceMatching || jobsData.some(jobNeedsCandidates);
+      const hasPendingJobs = jobsData.some(jobNeedsCandidates);
 
-      if (needsPoll && pollAttempts.current < maxAttempts) {
+      if (hasPendingJobs && pollAttempts.current < maxAttempts) {
         pollAttempts.current += 1;
         timeoutId = setTimeout(loadAndMaybePoll, pollIntervalMs);
-      } else if (!jobsData.some(jobNeedsCandidates)) {
+      } else {
         setIsMatching(false);
       }
     };
