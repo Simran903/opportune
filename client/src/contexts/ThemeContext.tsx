@@ -101,6 +101,15 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       } catch (e) {
         console.warn("Failed to save theme to localStorage:", e);
       }
+
+      const themeColor = isDark ? "#0a1210" : "#f8fafc";
+      let meta = document.querySelector('meta[name="theme-color"]');
+      if (!meta) {
+        meta = document.createElement("meta");
+        meta.setAttribute("name", "theme-color");
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute("content", themeColor);
     }
   }, [isDark, isClient]);
 

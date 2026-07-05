@@ -18,9 +18,9 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const animatedBgClasses = isClient ? getAnimatedBg() : [];
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 relative ${isDark ? "bg-black" : "bg-slate-50"}`}>
+    <div className={`min-h-dvh transition-colors duration-300 relative ${isDark ? "bg-black" : "bg-slate-50"}`}>
       {isClient && (
-        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-extend-safe">
           {animatedBgClasses.map((className, index) => (
             <div key={`bg-${index}`} className={className}></div>
           ))}
@@ -33,7 +33,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
       <main
         className={`
-          min-h-screen transition-all duration-300 ease-in-out relative z-10
+          min-h-dvh transition-all duration-300 ease-in-out relative z-10
           pt-16 md:pt-0
           ${isCollapsed
             ? 'md:ml-16'

@@ -163,8 +163,17 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    min-height: 100dvh;
+    background-color: var(--background);
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
   body {
     @apply bg-background text-foreground;
+    min-height: 100dvh;
     font-feature-settings: "cv11", "ss01";
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -358,6 +367,14 @@ html {
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Extend fixed backgrounds behind mobile safe areas (notch, home indicator) */
+.bg-extend-safe {
+  top: calc(-1 * env(safe-area-inset-top, 0px));
+  right: calc(-1 * env(safe-area-inset-right, 0px));
+  bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
+  left: calc(-1 * env(safe-area-inset-left, 0px));
 }
 
 ::selection {

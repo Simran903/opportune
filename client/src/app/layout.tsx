@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -29,6 +29,19 @@ export const metadata: Metadata = {
   title: "Opportune — AI-Powered Hiring Platform",
   description:
     "Connect with India's top tech talent through AI-powered candidate matching",
+  appleWebApp: {
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a1210" },
+  ],
 };
 
 export default function RootLayout({
@@ -51,6 +64,14 @@ export default function RootLayout({
                   var theme = localStorage.getItem('opportune-theme');
                   var isDark = theme === 'dark' || (!theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
                   document.documentElement.classList.toggle('dark', isDark);
+                  var themeColor = isDark ? '#0a1210' : '#f8fafc';
+                  var meta = document.querySelector('meta[name="theme-color"]');
+                  if (!meta) {
+                    meta = document.createElement('meta');
+                    meta.setAttribute('name', 'theme-color');
+                    document.head.appendChild(meta);
+                  }
+                  meta.setAttribute('content', themeColor);
                 } catch (e) {
                   document.documentElement.classList.add('dark');
                 }
@@ -63,7 +84,7 @@ export default function RootLayout({
         <SecurityProvider>
           <ThemeProvider>
             <SidebarProvider>
-              <body className="font-sans antialiased" suppressHydrationWarning={true}>
+              <body className="font-sans antialiased min-h-dvh" suppressHydrationWarning={true}>
                 {children}
                 <SecurityAlerts />
               </body>
