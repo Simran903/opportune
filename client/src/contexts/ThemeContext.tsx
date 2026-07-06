@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, createContext, useContext } from "react";
+import { applyThemeMeta } from "@/lib/themeMeta";
 
 // Theme Context
 type ThemeClasses = ReturnType<typeof getThemeClasses>;
@@ -95,21 +96,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   useEffect(() => {
     if (isClient) {
-      document.documentElement.classList.toggle("dark", isDark);
+      applyThemeMeta(isDark);
       try {
         localStorage.setItem("opportune-theme", isDark ? "dark" : "light");
       } catch (e) {
         console.warn("Failed to save theme to localStorage:", e);
       }
-
-      const themeColor = isDark ? "#0a1210" : "#f8fafc";
-      let meta = document.querySelector('meta[name="theme-color"]');
-      if (!meta) {
-        meta = document.createElement("meta");
-        meta.setAttribute("name", "theme-color");
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute("content", themeColor);
     }
   }, [isDark, isClient]);
 

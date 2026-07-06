@@ -38,10 +38,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a1210" },
-  ],
+  themeColor: "#0a1210",
 };
 
 export default function RootLayout({
@@ -53,7 +50,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning={true}
-      className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
+      className={`dark ${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
     >
       <head>
         <script
@@ -64,16 +61,15 @@ export default function RootLayout({
                   var theme = localStorage.getItem('opportune-theme');
                   var isDark = theme === 'dark' || (!theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
                   document.documentElement.classList.toggle('dark', isDark);
-                  var themeColor = isDark ? '#0a1210' : '#f8fafc';
-                  var meta = document.querySelector('meta[name="theme-color"]');
-                  if (!meta) {
-                    meta = document.createElement('meta');
-                    meta.setAttribute('name', 'theme-color');
-                    document.head.appendChild(meta);
-                  }
-                  meta.setAttribute('content', themeColor);
+                  document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+                  document.querySelectorAll('meta[name="theme-color"]').forEach(function(m) { m.remove(); });
+                  var meta = document.createElement('meta');
+                  meta.setAttribute('name', 'theme-color');
+                  meta.setAttribute('content', isDark ? '#0a1210' : '#f8fafc');
+                  document.head.appendChild(meta);
                 } catch (e) {
                   document.documentElement.classList.add('dark');
+                  document.documentElement.style.colorScheme = 'dark';
                 }
               })();
             `,
