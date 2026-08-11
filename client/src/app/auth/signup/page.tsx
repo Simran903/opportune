@@ -1,54 +1,43 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTheme } from "@/contexts/ThemeContext";
-import { Input } from "@/components/ui/input";
+import { User, Mail, Lock } from "lucide-react";
 import axiosClient from "@/lib/axiosClient";
-import { Eye, EyeOff, AlertCircle, MapPin, ArrowRight, Loader2, Mail, Lock, User } from "lucide-react";
-import { ThemeToggleButton } from "@/components/ThemeToggleButton";
-import { GoogleLogin } from '@react-oauth/google';
+import { TokenManager, InputSanitizer, SecurityLogger } from "@/lib/security";
 import {
-  TokenManager,
-  InputSanitizer,
-  SessionManager,
-  CSRFProtection,
-  SecurityLogger
-} from "@/lib/security";
+  AuthLayout,
+  TextField,
+  PasswordToggleButton,
+  PasswordStrengthIndicator,
+  SubmitButton,
+  Divider,
+  FormError,
+  GoogleAuthButton,
+  AuthSwitchLink,
+} from "@/components/auth";
+import type { PasswordValidation } from "@/components/auth/PasswordStrengthIndicator";
+import { useAuthPageInit } from "@/hooks/useAuthPageInit";
+import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 
 const SignupPage = () => {
-  const { getThemeClasses, isDark, getAnimatedBg } = useTheme();
-  const theme = getThemeClasses;
   const router = useRouter();
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [passwordValidation, setPasswordValidation] = useState<{
-    isValid: boolean;
-    errors: string[];
-    strength: 'weak' | 'medium' | 'strong';
-  } | null>(null);
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const [passwordValidation, setPasswordValidation] =
+    useState<PasswordValidation | null>(null);
 
-  useEffect(() => {
-    CSRFProtection.generateCSRFToken();
-
-    SessionManager.startSession();
-
-    SecurityLogger.logSecurityEvent('PAGE_ACCESS', {
-      page: 'signup',
-      timestamp: new Date().toISOString(),
-    });
-  }, []);
+  useAuthPageInit("signup");
+  const { handleGoogleSuccess, handleGoogleError } = useGoogleAuth("signup", setError);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
     let sanitizedValue = value;
-    if (name === 'email') {
+    if (name === "email") {
       sanitizedValue = InputSanitizer.sanitizeEmail(value);
-    } else if (name === 'name') {
+    } else if (name === "name") {
       sanitizedValue = InputSanitizer.sanitizeString(value);
     } else {
       sanitizedValue = value; // Don't sanitize password
@@ -57,7 +46,7 @@ const SignupPage = () => {
     setForm({ ...form, [name]: sanitizedValue });
     setError("");
 
-    if (name === 'password') {
+    if (name === "password") {
       const validation = InputSanitizer.validatePassword(value);
       setPasswordValidation(validation);
     }
@@ -103,7 +92,7 @@ const SignupPage = () => {
         if (token) {
           await TokenManager.storeToken(token);
 
-          SecurityLogger.logSecurityEvent('SIGNUP_SUCCESS', {
+          SecurityLogger.logSecurityEvent("SIGNUP_SUCCESS", {
             email: sanitizedForm.email,
             timestamp: new Date().toISOString(),
           });
@@ -111,7 +100,7 @@ const SignupPage = () => {
           router.push("/dashboard");
         } else {
           setError("Account created successfully but no token received.");
-          SecurityLogger.logSecurityEvent('SIGNUP_NO_TOKEN', {
+          SecurityLogger.logSecurityEvent("SIGNUP_NO_TOKEN", {
             email: sanitizedForm.email,
           });
         }
@@ -120,7 +109,7 @@ const SignupPage = () => {
       const errorMessage = err.response?.data?.message || "Signup failed.";
       setError(errorMessage);
 
-      SecurityLogger.logSecurityEvent('SIGNUP_FAILED', {
+      SecurityLogger.logSecurityEvent("SIGNUP_FAILED", {
         email: sanitizedForm.email,
         error: errorMessage,
       });
@@ -129,324 +118,84 @@ const SignupPage = () => {
     }
   };
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
-    setGoogleLoading(true);
-    setError("");
-    
-    try {
-      const res = await axiosClient.post("/user/google", {
-        token: credentialResponse.credential,
-      });
-
-      const token = res.data?.accesstoken;
-      if (token) {
-        await TokenManager.storeToken(token);
-
-        SecurityLogger.logSecurityEvent('GOOGLE_SIGNUP_SUCCESS', {
-          email: res.data?.user?.email,
-          timestamp: new Date().toISOString(),
-        });
-
-        router.push("/dashboard");
-      } else {
-        setError("Account created successfully but no token received.");
-        SecurityLogger.logSecurityEvent('GOOGLE_SIGNUP_NO_TOKEN', {
-          email: res.data?.user?.email,
-        });
-      }
-    } catch (err: any) {
-      const errorMessage =
-        err?.response?.data?.error ||
-        err?.response?.data?.message ||
-        "Google sign up failed. Please try again.";
-
-      setError(errorMessage);
-
-      SecurityLogger.logSecurityEvent('GOOGLE_SIGNUP_FAILED', {
-        error: errorMessage,
-      });
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
-
-  const handleGoogleError = () => {
-    setError("Google sign up was cancelled or failed.");
-    setGoogleLoading(false);
-    SecurityLogger.logSecurityEvent('GOOGLE_SIGNUP_ERROR', {
-      error: "User cancelled or error occurred",
-    });
-  };
-
-  const getPasswordStrengthIndicator = () => {
-    if (!form.password) return null;
-
-    const validation = passwordValidation || InputSanitizer.validatePassword(form.password);
-    const strengthColors = {
-      weak: 'bg-red-500',
-      medium: 'bg-yellow-500',
-      strong: 'bg-emerald-500'
-    };
-
-    const strengthTextColors = {
-      weak: 'text-red-500 dark:text-red-400',
-      medium: 'text-yellow-500 dark:text-yellow-400',
-      strong: 'text-emerald-500 dark:text-emerald-400'
-    };
-
-    const strengthLabels = {
-      weak: 'Weak',
-      medium: 'Medium',
-      strong: 'Strong'
-    };
-
-    return (
-      <div className="mt-4 space-y-4 animate-in slide-in-from-top-2 duration-300">
-        <div className="flex items-center space-x-3">
-          <div className={`flex-1 h-2.5 rounded-full overflow-hidden ${
-            isDark ? "bg-slate-700/50" : "bg-slate-200"
-          }`}>
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${strengthColors[validation.strength]} shadow-sm`}
-              style={{
-                width: `${(validation.strength === 'weak' ? 33 : validation.strength === 'medium' ? 66 : 100)}%`
-              }}
-            />
-          </div>
-          <span className={`text-xs font-bold capitalize px-2 py-1 rounded-md ${
-            strengthTextColors[validation.strength]
-          } ${isDark ? "bg-slate-800" : "bg-slate-100"}`}>
-            {strengthLabels[validation.strength]}
-          </span>
-        </div>
-
-        {/* Password requirements */}
-        {validation.errors.length > 0 && (
-          <div className="space-y-2 p-3 rounded-xl bg-red-50/50 dark:bg-red-900/10 border border-red-200/50 dark:border-red-800/30">
-            <p className={`text-xs font-semibold mb-2 ${isDark ? "text-red-300" : "text-red-700"}`}>
-              Password must include:
-            </p>
-            {validation.errors.map((error, index) => (
-              <div key={index} className="flex items-start space-x-2 text-sm animate-in slide-in-from-left-2 duration-300" style={{ animationDelay: `${index * 50}ms` }}>
-                <AlertCircle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
-                  isDark ? "text-red-400" : "text-red-500"
-                }`} />
-                <span className={`leading-tight text-xs ${
-                  isDark ? "text-red-300" : "text-red-600"
-                }`}>{error}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
-    <div className={`min-h-screen transition-all duration-500 relative overflow-hidden ${isDark ? "bg-black" : "bg-gradient-to-br from-slate-50 via-white to-emerald-50/30"}`}>
-      {/* Ambient Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {getAnimatedBg().map((className, index) => (
-          <div key={index} className={className}></div>
-        ))}
-        <div className="absolute inset-0 bg-grid"></div>
-      </div>
+    <AuthLayout
+      title="Create your account"
+      subtitle="Get started with Opportune today"
+    >
+      <form className="space-y-6" onSubmit={handleSubmit}>
+        <TextField
+          id="name"
+          name="name"
+          label="Full Name"
+          icon={User}
+          value={form.name}
+          onChange={handleChange}
+          autoComplete="name"
+          placeholder="John Doe"
+          disabled={loading}
+        />
+        <TextField
+          id="email"
+          name="email"
+          label="Email"
+          icon={Mail}
+          type="email"
+          value={form.email}
+          onChange={handleChange}
+          autoComplete="email"
+          placeholder="you@example.com"
+          disabled={loading}
+        />
+        <TextField
+          id="password"
+          name="password"
+          label="Password"
+          icon={Lock}
+          type={showPassword ? "text" : "password"}
+          value={form.password}
+          onChange={handleChange}
+          autoComplete="new-password"
+          placeholder="Create a strong password"
+          disabled={loading}
+          rightElement={
+            <PasswordToggleButton
+              showPassword={showPassword}
+              onToggle={togglePasswordVisibility}
+              disabled={loading}
+            />
+          }
+        >
+          <PasswordStrengthIndicator
+            password={form.password}
+            validation={passwordValidation}
+          />
+        </TextField>
 
-      {/* Theme Toggle */}
-      <div className="fixed top-4 right-4 z-50 animate-in fade-in slide-in-from-top-4 duration-500">
-        <ThemeToggleButton />
-      </div>
+        {error && <FormError message={error} />}
 
-      <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 relative z-10 py-12">
-        <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-8 duration-700">
-          {/* Logo/Brand */}
-          <div className="text-center mb-10">
-            <Link href="/" className="inline-flex items-center gap-3 mb-8 group">
-              <div className="p-2.5 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-glow transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
-                <MapPin className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-3xl font-display font-semibold tracking-tight text-gradient">
-                Opportune
-              </span>
-            </Link>
-            <h1 className={`text-3xl sm:text-4xl font-semibold mb-3 whitespace-nowrap ${theme.text.primary}`}>
-              Create your account
-            </h1>
-            <p className={`text-base sm:text-lg ${theme.text.secondary}`}>
-              Get started with Opportune today
-            </p>
-          </div>
+        <SubmitButton
+          loading={loading}
+          loadingLabel="Creating Account..."
+          label="Create Account"
+          disabled={!passwordValidation?.isValid}
+        />
+      </form>
 
-          {/* Form Card */}
-          <div className={`w-full p-8 sm:p-10 rounded-3xl border backdrop-blur-xl shadow-elevated transition-all duration-300 ${
-            isDark
-              ? "bg-slate-900/80 border-white/10"
-              : "bg-white/85 border-slate-200/70"
-          }`}>
-            <form className="space-y-6" onSubmit={handleSubmit}>
-              <div className="space-y-2">
-                <label
-                  className={`block mb-2 font-semibold text-sm ${theme.text.primary} flex items-center space-x-2`}
-                  htmlFor="name"
-                >
-                  <User className="w-4 h-4" />
-                  <span>Full Name</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <User className={`w-5 h-5 ${isDark ? "text-slate-500" : "text-slate-400"}`} />
-                  </div>
-                  <Input
-                    id="name"
-                    name="name"
-                    type="text"
-                    value={form.name}
-                    onChange={handleChange}
-                    className="w-full pl-12"
-                    autoComplete="name"
-                    placeholder="John Doe"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label
-                  className={`block mb-2 font-semibold text-sm ${theme.text.primary} flex items-center space-x-2`}
-                  htmlFor="email"
-                >
-                  <Mail className="w-4 h-4" />
-                  <span>Email</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <Mail className={`w-5 h-5 ${isDark ? "text-slate-500" : "text-slate-400"}`} />
-                  </div>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    className="w-full pl-12"
-                    autoComplete="email"
-                    placeholder="you@example.com"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label
-                  className={`block mb-2 font-semibold text-sm ${theme.text.primary} flex items-center space-x-2`}
-                  htmlFor="password"
-                >
-                  <Lock className="w-4 h-4" />
-                  <span>Password</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <Lock className={`w-5 h-5 ${isDark ? "text-slate-500" : "text-slate-400"}`} />
-                  </div>
-                  <Input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    value={form.password}
-                    onChange={handleChange}
-                    className="w-full pl-12 pr-12"
-                    autoComplete="new-password"
-                    placeholder="Create a strong password"
-                    required
-                    disabled={loading}
-                  />
-                  <button
-                    type="button"
-                    onClick={togglePasswordVisibility}
-                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 p-2 rounded-lg transition-all duration-200 ${
-                      isDark 
-                        ? "hover:bg-slate-800 text-slate-400 hover:text-slate-300" 
-                        : "hover:bg-slate-100 text-slate-500 hover:text-slate-700"
-                    }`}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                    disabled={loading}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-5 h-5" />
-                    ) : (
-                      <Eye className="w-5 h-5" />
-                    )}
-                  </button>
-                </div>
-                {getPasswordStrengthIndicator()}
-              </div>
+      <Divider />
 
-              {error && (
-                <div className="p-4 bg-red-50 dark:bg-red-900/30 border-2 border-red-200 dark:border-red-800/50 rounded-xl flex items-start space-x-3 animate-in slide-in-from-top-2 duration-300 shadow-sm">
-                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm font-medium text-red-700 dark:text-red-300 flex-1">{error}</span>
-                </div>
-              )}
+      <GoogleAuthButton
+        mode="signup"
+        onSuccess={handleGoogleSuccess}
+        onError={handleGoogleError}
+      />
 
-              <button
-                type="submit"
-                className={`btn-shine group w-full py-3.5 rounded-xl font-semibold transition-all duration-300 mt-8 bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-glow flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 hover:-translate-y-0.5 active:scale-[0.98]`}
-                disabled={loading || !passwordValidation?.isValid}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Creating Account...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Create Account</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </button>
-            </form>
-
-            {/* Divider */}
-            <div className="relative my-8">
-              <div className="absolute inset-0 flex items-center">
-                <div className={`w-full border-t ${isDark ? "border-slate-700/50" : "border-slate-300/50"}`}></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className={`px-4 ${theme.text.secondary} bg-inherit font-medium`}>Or continue with</span>
-              </div>
-            </div>
-
-            {/* Google Sign Up Button */}
-            <div className="flex justify-center items-center mb-6">
-              <div className="w-full flex justify-center transform transition-transform hover:scale-[1.02] active:scale-[0.98]">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={handleGoogleError}
-                  useOneTap={false}
-                  theme={isDark ? "filled_black" : "outline"}
-                  size="large"
-                  text="signup_with"
-                  shape="rectangular"
-                  logo_alignment="left"
-                  width="100%"
-                />
-              </div>
-            </div>
-
-            <p className={`mt-8 text-center text-sm ${theme.text.secondary} font-medium`}>
-              Already have an account?{" "}
-              <Link
-                href="/auth/signin"
-                className={`font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 underline-offset-4 hover:underline transition-all duration-200`}
-              >
-                Sign in
-              </Link>
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+      <AuthSwitchLink
+        prompt="Already have an account?"
+        label="Sign in"
+        href="/auth/signin"
+      />
+    </AuthLayout>
   );
 };
 
