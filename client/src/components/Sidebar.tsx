@@ -281,9 +281,7 @@ export const Sidebar = () => {
       {/* Sign Out Confirm Dialog */}
       {showSignOutConfirm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-          <div
-            className={`${getThemeClasses.nav} rounded-lg p-6 w-full max-w-md border border-slate-700/50`}
-          >
+          <div className="bg-slate-100 dark:bg-black text-slate-900 dark:text-slate-50 rounded-lg p-6 w-full max-w-md border border-slate-200 dark:border-teal-500/30 shadow-elevated">
             <h3
               className={`text-lg font-semibold ${getThemeClasses.text.primary} mb-2`}
             >
@@ -317,9 +315,7 @@ export const Sidebar = () => {
       {/* Password Update Modal */}
       {showPasswordModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-          <div
-            className={`${getThemeClasses.nav} rounded-lg p-6 w-full max-w-md border border-slate-700/50`}
-          >
+          <div className="bg-slate-100 dark:bg-black text-slate-900 dark:text-slate-50 rounded-lg p-6 w-full max-w-md border border-slate-200 dark:border-teal-500/30 shadow-elevated">
             <h3
               className={`text-lg font-semibold ${getThemeClasses.text.primary} mb-4`}
             >
@@ -342,7 +338,7 @@ export const Sidebar = () => {
                         currentPassword: e.target.value,
                       })
                     }
-                    className={`w-full px-3 py-2 pr-10 rounded-lg ${getThemeClasses.nav} border border-slate-700/50 ${getThemeClasses.text.primary} focus:outline-none focus:ring-2 focus:ring-emerald-500`}
+                    className={`w-full px-3 py-2 pr-10 rounded-lg ${getThemeClasses.input} ${getThemeClasses.text.primary} focus:outline-none focus:ring-2 focus:ring-emerald-500`}
                     required
                   />
                   <button
@@ -377,7 +373,7 @@ export const Sidebar = () => {
                         newPassword: e.target.value,
                       })
                     }
-                    className={`w-full px-3 py-2 pr-10 rounded-lg ${getThemeClasses.nav} border border-slate-700/50 ${getThemeClasses.text.primary} focus:outline-none focus:ring-2 focus:ring-emerald-500`}
+                    className={`w-full px-3 py-2 pr-10 rounded-lg ${getThemeClasses.input} ${getThemeClasses.text.primary} focus:outline-none focus:ring-2 focus:ring-emerald-500`}
                     required
                   />
                   <button
@@ -412,7 +408,7 @@ export const Sidebar = () => {
                         confirmPassword: e.target.value,
                       })
                     }
-                    className={`w-full px-3 py-2 pr-10 rounded-lg ${getThemeClasses.nav} border border-slate-700/50 ${getThemeClasses.text.primary} focus:outline-none focus:ring-2 focus:ring-emerald-500`}
+                    className={`w-full px-3 py-2 pr-10 rounded-lg ${getThemeClasses.input} ${getThemeClasses.text.primary} focus:outline-none focus:ring-2 focus:ring-emerald-500`}
                     required
                   />
                   <button

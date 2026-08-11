@@ -390,11 +390,7 @@ const PostJob = () => {
 
           {pendingDraft && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
-              <div className={`rounded-xl p-4 sm:p-6 shadow-xl border backdrop-blur-xl w-full max-w-xs sm:max-w-sm ${
-                isDark 
-                  ? "bg-slate-900/95 border-slate-800" 
-                  : "bg-white/95 border-slate-200"
-              }`}>
+              <div className="rounded-xl p-4 sm:p-6 shadow-elevated border border-slate-200 dark:border-teal-500/30 bg-slate-100 dark:bg-black text-slate-900 dark:text-slate-50 backdrop-blur-xl w-full max-w-xs sm:max-w-sm">
                 <h3 className={`text-lg font-semibold mb-2 ${theme.text.primary}`}>Unsaved Changes</h3>
                 <p className={`${theme.text.secondary} mb-4`}>You have unsaved changes. Loading a draft will overwrite your current progress. Do you want to continue?</p>
                 <div className="flex gap-4 justify-end">

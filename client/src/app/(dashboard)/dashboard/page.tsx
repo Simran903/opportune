@@ -539,13 +539,7 @@ const Jobs = () => {
         {/* Delete Confirmation Modal */}
         {showDeleteModal && jobToDelete && (
           <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
-            <div
-              className={`animate-scale-in rounded-2xl w-full max-w-xs sm:max-w-md border backdrop-blur-xl shadow-elevated ${
-                isDark
-                  ? "bg-slate-900/95 border-white/10"
-                  : "bg-white/95 border-slate-200"
-              }`}
-            >
+            <div className="animate-scale-in rounded-2xl w-full max-w-xs sm:max-w-md border border-slate-200 dark:border-teal-500/30 bg-slate-100 dark:bg-black text-slate-900 dark:text-slate-50 backdrop-blur-xl shadow-elevated">
               <div className="p-4 sm:p-6">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
@@ -618,13 +612,7 @@ const Jobs = () => {
         {/* Candidates Modal */}
         {showCandidatesModal && selectedJob && (
           <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
-            <div
-              className={`animate-scale-in rounded-2xl w-full max-w-md sm:max-w-2xl max-h-[80vh] overflow-hidden border backdrop-blur-xl shadow-elevated ${
-                isDark
-                  ? "bg-slate-900/95 border-white/10"
-                  : "bg-white/95 border-slate-200"
-              }`}
-            >
+            <div className="animate-scale-in rounded-2xl w-full max-w-md sm:max-w-2xl max-h-[80vh] overflow-hidden border border-slate-200 dark:border-teal-500/30 bg-slate-100 dark:bg-black text-slate-900 dark:text-slate-50 backdrop-blur-xl shadow-elevated">
               <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
                 <div>
                   <h2 className={`${theme.text.primary} text-xl font-semibold`}>
@@ -713,11 +701,7 @@ const Jobs = () => {
         {/* Job Details Modal */}
         {showJobDetailsModal && (
           <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
-            <div className={`animate-scale-in rounded-2xl w-full max-w-md sm:max-w-2xl max-h-[80vh] overflow-hidden border backdrop-blur-xl shadow-elevated ${
-              isDark
-                ? "bg-slate-900/95 border-white/10"
-                : "bg-white/95 border-slate-200"
-            }`}>
+            <div className="animate-scale-in rounded-2xl w-full max-w-md sm:max-w-2xl max-h-[80vh] overflow-hidden border border-slate-200 dark:border-teal-500/30 bg-slate-100 dark:bg-black text-slate-900 dark:text-slate-50 backdrop-blur-xl shadow-elevated">
               <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
                 <div>
                   <h2 className={`${theme.text.primary} text-xl font-semibold`}>Job Details</h2>
