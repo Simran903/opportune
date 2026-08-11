@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
 import {
   MapPin,
@@ -172,6 +174,22 @@ const stats = [
 export default function HomePage() {
   const { isDark, getThemeClasses, getAnimatedBg } = useTheme();
   const theme = getThemeClasses;
+
+  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
+  const [carouselPaused, setCarouselPaused] = useState(false);
+
+  // Auto-advance the testimonials carousel every 5s (paused on hover/focus)
+  useEffect(() => {
+    if (!carouselApi) return;
+
+    const interval = setInterval(() => {
+      if (!carouselPaused) {
+        carouselApi.scrollNext();
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [carouselApi, carouselPaused]);
 
   return (
     <div
@@ -382,7 +400,15 @@ export default function HomePage() {
           </div>
 
           <div className="max-w-6xl mx-auto">
-            <Carousel opts={{ loop: true }} className="w-full">
+            <Carousel
+              opts={{ loop: true }}
+              className="w-full"
+              setApi={setCarouselApi}
+              onMouseEnter={() => setCarouselPaused(true)}
+              onMouseLeave={() => setCarouselPaused(false)}
+              onFocusCapture={() => setCarouselPaused(true)}
+              onBlurCapture={() => setCarouselPaused(false)}
+            >
               <CarouselContent>
                 {testimonials.map((item, index) => (
                   <CarouselItem key={index} className="md:basis-1/2">
