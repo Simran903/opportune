@@ -19,20 +19,6 @@ prisma/dev.db
 prisma/dev.db-journal
 .prisma/
 
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-*.egg
-*.pyo
-*.pyd
-.Python
-.python-version
-python/venv/
-pip-log.txt
-python/venv/
-.env
-
 # macOS/Linux
 .DS_Store
 .idea/

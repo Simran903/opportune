@@ -37,7 +37,7 @@ Opportune is a full-stack job platform that automatically matches LinkedIn candi
 - **Authentication**: JWT, bcrypt, Google Auth Library
 - **Validation**: Zod
 
-### Microservice (`server/python/`)
+### Python Microservice (`python-service/`)
 
 - **Framework**: FastAPI
 - **ML Libraries**: KeyBERT, Transformers
@@ -67,11 +67,12 @@ opportune/
 │   │   ├── config/      # Database config
 │   │   └── server.ts    # Express server entry
 │   ├── prisma/          # Prisma schema and migrations
-│   ├── python/          # FastAPI microservice
-│   │   ├── app.py       # FastAPI application
-│   │   ├── scraper.py   # LinkedIn scraping logic
-│   │   └── requirements.txt
 │   └── package.json
+│
+├── python-service/      # FastAPI microservice
+│   ├── app.py           # FastAPI application
+│   ├── scraper.py       # LinkedIn scraping logic
+│   └── requirements.txt
 │
 └── README.md
 ```
@@ -151,7 +152,7 @@ GOOGLE_CLIENT_ID=your_google_client_id
 ### 3. Python Microservice Setup
 
 ```bash
-cd server/python
+cd python-service
 
 # Create virtual environment
 python3 -m venv venv
@@ -177,7 +178,7 @@ SCRAPER_API_KEY=your_scraperapi_key
 Build and run the Python microservice with Docker:
 
 ```bash
-cd server/python
+cd python-service
 docker build -t opportune-python .
 docker run -p 10000:10000 opportune-python
 ```
@@ -258,7 +259,7 @@ npm run build    # Compile TypeScript to JavaScript
 npm run start    # Start production server
 ```
 
-### Python Microservice (`server/python/`)
+### Python Microservice (`python-service/`)
 
 ```bash
 uvicorn app:app --host 0.0.0.0 --port 10000 --reload  # Development
@@ -272,7 +273,7 @@ uvicorn app:app --host 0.0.0.0 --port 10000          # Production
 1. **Start PostgreSQL database**
 2. **Start backend**: `cd server && npm run dev`
 3. **Start frontend**: `cd client && npm run dev`
-4. **Start Python service**: `cd server/python && uvicorn app:app --reload`
+4. **Start Python service**: `cd python-service && uvicorn app:app --reload`
 
 All services should be running simultaneously for full functionality.
 
