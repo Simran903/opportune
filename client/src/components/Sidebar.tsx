@@ -1,64 +1,33 @@
-import React from "react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Menu, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  Home,
-  PlusSquare,
-  Menu,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  LogOut,
-  Key,
-  Check,
-  Eye,
-  EyeOff,
-  Mail,
-  ChevronUp,
-} from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useSidebar } from "@/contexts/SidebarContext";
-import { ThemeToggleButton } from "./ThemeToggleButton";
 import { jwtDecode } from "jwt-decode";
-import { useEffect, useState } from "react";
 import axiosClient from "@/lib/axiosClient";
 import { TokenManager, SessionManager, SecurityLogger } from "@/lib/security";
+import { SidebarHeader } from "./sidebar/SidebarHeader";
+import { SidebarNavigation } from "./sidebar/SidebarNavigation";
+import { SidebarFooter } from "./sidebar/SidebarFooter";
+import { SuccessToast } from "./sidebar/SuccessToast";
+import { SignOutModal } from "./sidebar/SignOutModal";
+import { UpdatePasswordModal } from "./sidebar/UpdatePasswordModal";
+
+type SidebarUser = { name?: string; email?: string };
 
 export const Sidebar = () => {
-  const { isDark, getThemeClasses } = useTheme();
+  const { getThemeClasses } = useTheme();
   const { isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen } =
     useSidebar();
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState<{ name?: string; email?: string } | null>(
-    null
-  );
-  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [user, setUser] = useState<SidebarUser | null>(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-  const [passwordError, setPasswordError] = useState("");
-  const [passwordLoading, setPasswordLoading] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [showPasswords, setShowPasswords] = useState({
-    current: false,
-    new: false,
-    confirm: false,
-  });
 
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
   const toggleMobile = () => setIsMobileOpen(!isMobileOpen);
-
-  const togglePasswordVisibility = (field: "current" | "new" | "confirm") => {
-    setShowPasswords((prev) => ({
-      ...prev,
-      [field]: !prev[field],
-    }));
-  };
 
   useEffect(() => {
     const initializeUser = async () => {
@@ -134,15 +103,6 @@ export const Sidebar = () => {
     };
   }, [router]);
 
-  useEffect(() => {
-    if (showSuccessToast) {
-      const timer = setTimeout(() => {
-        setShowSuccessToast(false);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [showSuccessToast]);
-
   const handleSignOut = async () => {
     if (typeof window !== "undefined") {
       // Log sign out event
@@ -158,40 +118,21 @@ export const Sidebar = () => {
 
       // Close the confirm dialog
       setShowSignOutConfirm(false);
-      setShowUserMenu(false);
 
       router.push("/");
     }
   };
 
-  const handlePasswordUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPasswordError("");
-
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordError("New passwords don't match");
-      return;
-    }
-
-    if (passwordForm.newPassword.length < 6) {
-      setPasswordError("Password must be at least 6 characters");
-      return;
-    }
-
-    setPasswordLoading(true);
-
+  const handlePasswordSubmit = async (
+    currentPassword: string,
+    newPassword: string
+  ) => {
     try {
       await axiosClient.post("/user/update-password", {
-        currentPassword: passwordForm.currentPassword,
-        newPassword: passwordForm.newPassword,
+        currentPassword,
+        newPassword,
       });
 
-      setShowPasswordModal(false);
-      setPasswordForm({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
       setShowSuccessToast(true);
 
       // Log password update
@@ -200,62 +141,24 @@ export const Sidebar = () => {
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        setPasswordError(error.response.data.message);
-      } else {
-        setPasswordError("Failed to update password");
-      }
-
       // Log password update failure
       SecurityLogger.logSecurityEvent('PASSWORD_UPDATE_FAILED', {
         userId: user?.email,
         error: error.response?.data?.message || 'Unknown error',
         timestamp: new Date().toISOString(),
       });
-    } finally {
-      setPasswordLoading(false);
+
+      if (error?.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error("Failed to update password");
     }
   };
-
-  const menuItems = [
-    { title: "Dashboard", icon: Home, url: "/dashboard" },
-    { title: "Post Job", icon: PlusSquare, url: "/post-job" },
-  ];
 
   return (
     <>
       {showSuccessToast && (
-        <div className="fixed top-4 right-4 z-[70] animate-in slide-in-from-top-2 duration-300">
-          <div
-            className={`${getThemeClasses.nav} border border-emerald-500/30 rounded-lg p-4 shadow-lg backdrop-blur-xl`}
-          >
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                <Check className="w-4 h-4 text-emerald-400" />
-              </div>
-              <div>
-                <p
-                  className={`text-sm font-medium ${getThemeClasses.text.primary}`}
-                >
-                  Password Updated
-                </p>
-                <p className={`text-xs ${getThemeClasses.text.muted}`}>
-                  Your password has been successfully updated.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowSuccessToast(false)}
-                className={`ml-4 ${getThemeClasses.button.ghost} p-1 rounded`}
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
+        <SuccessToast onClose={() => setShowSuccessToast(false)} />
       )}
 
       {/* Mobile menu button */}
@@ -280,188 +183,18 @@ export const Sidebar = () => {
 
       {/* Sign Out Confirm Dialog */}
       {showSignOutConfirm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-          <div className="bg-popover text-popover-foreground rounded-lg p-6 w-full max-w-md border border-border-accent shadow-elevated">
-            <h3
-              className={`text-lg font-semibold ${getThemeClasses.text.primary} mb-2`}
-            >
-              Confirm Sign Out
-            </h3>
-            <p className={`text-sm ${getThemeClasses.text.secondary} mb-6`}>
-              Are you sure you want to sign out? You will need to log in again to access your account.
-            </p>
-            <div className="flex space-x-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowSignOutConfirm(false);
-                }}
-                className={`flex-1 px-4 py-2 rounded-lg ${getThemeClasses.button.ghost} transition-colors duration-200`}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="flex-1 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors duration-200"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
-        </div>
+        <SignOutModal
+          onCancel={() => setShowSignOutConfirm(false)}
+          onConfirm={handleSignOut}
+        />
       )}
 
       {/* Password Update Modal */}
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-          <div className="bg-popover text-popover-foreground rounded-lg p-6 w-full max-w-md border border-border-accent shadow-elevated">
-            <h3
-              className={`text-lg font-semibold ${getThemeClasses.text.primary} mb-4`}
-            >
-              Update Password
-            </h3>
-            <form onSubmit={handlePasswordUpdate} className="space-y-4">
-              <div>
-                <label
-                  className={`block text-sm font-medium ${getThemeClasses.text.secondary} mb-1`}
-                >
-                  Current Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPasswords.current ? "text" : "password"}
-                    value={passwordForm.currentPassword}
-                    onChange={(e) =>
-                      setPasswordForm({
-                        ...passwordForm,
-                        currentPassword: e.target.value,
-                      })
-                    }
-                    className={`w-full px-3 py-2 pr-10 rounded-lg ${getThemeClasses.input} ${getThemeClasses.text.primary} focus:outline-none focus:ring-2 focus:ring-emerald-500`}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => togglePasswordVisibility("current")}
-                    className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-md transition-colors duration-200 ${getThemeClasses.button.ghost} hover:bg-surface-muted`}
-                    aria-label={
-                      showPasswords.current ? "Hide password" : "Show password"
-                    }
-                  >
-                    {showPasswords.current ? (
-                      <EyeOff className="w-4 h-4 text-slate-500" />
-                    ) : (
-                      <Eye className="w-4 h-4 text-slate-500" />
-                    )}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label
-                  className={`block text-sm font-medium ${getThemeClasses.text.secondary} mb-1`}
-                >
-                  New Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPasswords.new ? "text" : "password"}
-                    value={passwordForm.newPassword}
-                    onChange={(e) =>
-                      setPasswordForm({
-                        ...passwordForm,
-                        newPassword: e.target.value,
-                      })
-                    }
-                    className={`w-full px-3 py-2 pr-10 rounded-lg ${getThemeClasses.input} ${getThemeClasses.text.primary} focus:outline-none focus:ring-2 focus:ring-emerald-500`}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => togglePasswordVisibility("new")}
-                    className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-md transition-colors duration-200 ${getThemeClasses.button.ghost} hover:bg-surface-muted`}
-                    aria-label={
-                      showPasswords.new ? "Hide password" : "Show password"
-                    }
-                  >
-                    {showPasswords.new ? (
-                      <EyeOff className="w-4 h-4 text-slate-500" />
-                    ) : (
-                      <Eye className="w-4 h-4 text-slate-500" />
-                    )}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label
-                  className={`block text-sm font-medium ${getThemeClasses.text.secondary} mb-1`}
-                >
-                  Confirm New Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPasswords.confirm ? "text" : "password"}
-                    value={passwordForm.confirmPassword}
-                    onChange={(e) =>
-                      setPasswordForm({
-                        ...passwordForm,
-                        confirmPassword: e.target.value,
-                      })
-                    }
-                    className={`w-full px-3 py-2 pr-10 rounded-lg ${getThemeClasses.input} ${getThemeClasses.text.primary} focus:outline-none focus:ring-2 focus:ring-emerald-500`}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => togglePasswordVisibility("confirm")}
-                    className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-md transition-colors duration-200 ${getThemeClasses.button.ghost} hover:bg-surface-muted`}
-                    aria-label={
-                      showPasswords.confirm ? "Hide password" : "Show password"
-                    }
-                  >
-                    {showPasswords.confirm ? (
-                      <EyeOff className="w-4 h-4 text-slate-500" />
-                    ) : (
-                      <Eye className="w-4 h-4 text-slate-500" />
-                    )}
-                  </button>
-                </div>
-              </div>
-              {passwordError && (
-                <p className="text-red-400 text-sm">{passwordError}</p>
-              )}
-              <div className="flex space-x-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowPasswordModal(false);
-                    setPasswordForm({
-                      currentPassword: "",
-                      newPassword: "",
-                      confirmPassword: "",
-                    });
-                    setPasswordError("");
-                    setShowPasswords({
-                      current: false,
-                      new: false,
-                      confirm: false,
-                    });
-                  }}
-                  className={`flex-1 px-4 py-2 rounded-lg ${getThemeClasses.button.ghost} transition-colors duration-200`}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={passwordLoading}
-                  className="flex-1 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors duration-200 disabled:opacity-50"
-                >
-                  {passwordLoading ? "Updating..." : "Update"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <UpdatePasswordModal
+          onClose={() => setShowPasswordModal(false)}
+          onSubmit={handlePasswordSubmit}
+        />
       )}
 
       {/* Sidebar */}
@@ -479,269 +212,24 @@ export const Sidebar = () => {
         `}
       >
         <div className="relative z-10">
-          {/* Header */}
-          <div
-            className={`relative flex items-center ${isCollapsed ? "pl-4" : "pl-6"
-              } p-4 border-b border-slate-700/50 h-16`}
-          >
-            <div className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-glow">
-                <span className="text-white font-display font-bold text-sm">O</span>
-              </div>
-              {!isCollapsed && (
-                <span className="font-display font-semibold text-lg text-gradient">
-                  Opportune
-                </span>
-              )}
-            </div>
-
-            {/* Collapse button - only show on desktop */}
-            <button
-              onClick={toggleCollapse}
-              className={`
-                hidden md:flex items-center justify-center
-                absolute -right-3 top-1/2 transform -translate-y-1/2
-                w-6 h-6 rounded-full
-                ${getThemeClasses.nav} border border-slate-700/50
-                ${getThemeClasses.button.ghost}
-                transition-all duration-200 z-10
-                shadow-lg
-              `}
-            >
-              {isCollapsed ? (
-                <ChevronRight className="w-3 h-3" />
-              ) : (
-                <ChevronLeft className="w-3 h-3" />
-              )}
-            </button>
-          </div>
-
-          {/* Navigation */}
-          <nav
-            className={`flex-1 py-4 space-y-3 ${isCollapsed ? "px-2" : "px-4"}`}
-          >
-            {menuItems.map((item, index) => {
-              const isActive = pathname === item.url;
-              return (
-                <div key={index} className="relative group">
-                  <Link
-                    href={item.url}
-                    className={`
-                      flex items-center rounded-xl font-medium
-                      ${isCollapsed
-                        ? "justify-center p-3"
-                        : "space-x-3 px-3 py-2.5"
-                      }
-                      ${isActive
-                        ? "bg-gradient-to-r from-emerald-500/20 to-teal-500/10 text-emerald-500 dark:text-emerald-300 border border-emerald-500/30 shadow-soft"
-                        : `${getThemeClasses.button.ghost} border border-transparent`
-                      }
-                      relative overflow-hidden
-                      transition-all duration-300 hover:translate-x-0.5
-                    `}
-                    onClick={() => {
-                      // Close mobile menu on navigation
-                      setIsMobileOpen(false);
-                    }}
-                  >
-                    <div className="relative">
-                      <item.icon
-                        className={`w-5 h-5 ${isActive
-                            ? "text-emerald-400"
-                            : getThemeClasses.accent.emerald
-                          } transition-colors duration-200`}
-                      />
-                    </div>
-
-                    {!isCollapsed && (
-                      <span
-                        className={`${isActive
-                            ? "text-emerald-400 font-medium"
-                            : getThemeClasses.text.secondary
-                          } group-hover:${getThemeClasses.text.primary.replace(
-                            "text-",
-                            "text-"
-                          )} transition-colors duration-200 flex-1`}
-                      >
-                        {item.title}
-                      </span>
-                    )}
-
-                    {/* Tooltip for collapsed state */}
-                    {isCollapsed && (
-                      <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                        {item.title}
-                      </div>
-                    )}
-                  </Link>
-                </div>
-              );
-            })}
-          </nav>
+          <SidebarHeader
+            isCollapsed={isCollapsed}
+            onToggleCollapse={toggleCollapse}
+          />
+          <SidebarNavigation
+            isCollapsed={isCollapsed}
+            onNavigate={() => setIsMobileOpen(false)}
+          />
         </div>
 
-        {/* Footer */}
-        <div
-          className={`border-t border-slate-700/50 ${isCollapsed ? "p-2" : "p-4"
-            } relative z-10`}
-        >
-          {/* Theme toggle */}
-          <div className="relative group mb-2">
-            <div
-              className={`w-full flex items-center ${isCollapsed ? "pl-0" : "pl-2"
-                }`}
-            >
-              <ThemeToggleButton className="border-none shadow-none" />
-              {!isCollapsed && (
-                <span className={`ml-3 ${getThemeClasses.text.secondary}`}>
-                  {isDark ? "Light Mode" : "Dark Mode"}
-                </span>
-              )}
-            </div>
-            {isCollapsed && (
-              <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                {isDark ? "Light Mode" : "Dark Mode"}
-              </div>
-            )}
-          </div>
-
-          {/* User profile with dropdown */}
-          <div className="relative group">
-            <div
-              className={`flex items-center rounded-lg cursor-pointer transition-all duration-200 ${isCollapsed ? "justify-center p-3" : "space-x-3 px-3 py-2.5"
-                } ${getThemeClasses.button.ghost} ${showUserMenu ? "bg-emerald-500/10 ring-2 ring-emerald-500/30" : ""
-                } hover:bg-emerald-500/5`}
-              onClick={() => setShowUserMenu(!showUserMenu)}
-            >
-              <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-400 flex items-center justify-center flex-shrink-0 transition-all duration-200 ${showUserMenu ? "ring-2 ring-emerald-500/50 scale-105" : ""
-                }`}>
-                <span className="text-white font-bold text-sm">
-                  {(user?.email && user?.email.charAt(0).toUpperCase()) || "G"}
-                </span>
-              </div>
-              {!isCollapsed && (
-                <>
-                  <div className="flex-1 min-w-0">
-
-                    <div
-                      className={`text-xs ${getThemeClasses.text.muted} truncate flex items-center gap-1`}
-                    >
-
-                      {user?.email || "Not signed in"}
-                    </div>
-                  </div>
-                  <ChevronUp
-                    className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showUserMenu ? "rotate-180" : ""
-                      }`}
-                  />
-                </>
-              )}
-            </div>
-
-            {/* User menu dropdown */}
-            {showUserMenu && !isCollapsed && (
-              <div
-                className={`absolute bottom-full left-0 right-0 mb-2 ${getThemeClasses.nav} border border-slate-700/50 rounded-lg shadow-xl overflow-hidden backdrop-blur-xl`}
-              >
-                {/* Menu Items */}
-                <div className="py-1">
-                  <button
-                    onClick={() => {
-                      setShowPasswordModal(true);
-                      setShowUserMenu(false);
-                    }}
-                    className={`w-full flex items-center space-x-3 px-4 py-2.5 text-left ${getThemeClasses.button.ghost} hover:bg-emerald-500/10 hover:text-emerald-400 transition-all duration-200 group`}
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
-                      <Key className="w-4 h-4 text-emerald-400" />
-                    </div>
-                    <span className={`text-sm font-medium ${getThemeClasses.text.secondary} group-hover:text-emerald-400 transition-colors`}>
-                      Update Password
-                    </span>
-                  </button>
-
-                  <div className="h-px bg-slate-700/50 my-1 mx-4" />
-
-                  <button
-                    onClick={() => {
-                      setShowSignOutConfirm(true);
-                      setShowUserMenu(false);
-                    }}
-                    className={`w-full flex items-center space-x-3 px-4 py-2.5 text-left ${getThemeClasses.button.ghost} hover:bg-red-500/10 hover:text-red-400 transition-all duration-200 group`}
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center group-hover:bg-red-500/20 transition-colors">
-                      <LogOut className="w-4 h-4 text-red-400" />
-                    </div>
-                    <span className="text-sm font-medium text-slate-400 group-hover:text-red-400 transition-colors">
-                      Sign Out
-                    </span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Collapsed state tooltip */}
-            {isCollapsed && (
-              <div className="absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                <div className="font-medium">{user?.name}</div>
-                <div className="text-xs text-gray-300">
-                  {user?.email || "Not signed in"}
-                </div>
-              </div>
-            )}
-
-            {/* Collapsed state user menu */}
-            {isCollapsed && showUserMenu && (
-              <div
-                className={`absolute left-full top-0 ml-2 ${getThemeClasses.nav} border border-slate-700/50 rounded-lg shadow-xl overflow-hidden whitespace-nowrap backdrop-blur-xl`}
-              >
-                {/* Menu Items */}
-                <div className="py-1">
-                  <button
-                    onClick={() => {
-                      setShowPasswordModal(true);
-                      setShowUserMenu(false);
-                    }}
-                    className={`w-full flex items-center space-x-3 px-4 py-2.5 text-left ${getThemeClasses.button.ghost} hover:bg-emerald-500/10 hover:text-emerald-400 transition-all duration-200 group`}
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
-                      <Key className="w-4 h-4 text-emerald-400" />
-                    </div>
-                    <span className={`text-sm font-medium ${getThemeClasses.text.secondary} group-hover:text-emerald-400 transition-colors`}>
-                      Update Password
-                    </span>
-                  </button>
-
-                  <div className="h-px bg-slate-700/50 my-1 mx-4" />
-
-                  <button
-                    onClick={() => {
-                      setShowSignOutConfirm(true);
-                      setShowUserMenu(false);
-                    }}
-                    className={`w-full flex items-center space-x-3 px-4 py-2.5 text-left ${getThemeClasses.button.ghost} hover:bg-red-500/10 hover:text-red-400 transition-all duration-200 group`}
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center group-hover:bg-red-500/20 transition-colors">
-                      <LogOut className="w-4 h-4 text-red-400" />
-                    </div>
-                    <span className="text-sm font-medium text-slate-400 group-hover:text-red-400 transition-colors">
-                      Sign Out
-                    </span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Click outside to close user menu */}
-      {showUserMenu && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setShowUserMenu(false)}
+        <SidebarFooter
+          isCollapsed={isCollapsed}
+          name={user?.name}
+          email={user?.email}
+          onUpdatePassword={() => setShowPasswordModal(true)}
+          onSignOut={() => setShowSignOutConfirm(true)}
         />
-      )}
+      </div>
     </>
   );
 };
