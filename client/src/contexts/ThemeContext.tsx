@@ -27,38 +27,30 @@ export const getThemeClasses = (isDark: boolean) => ({
   background: isDark
     ? "bg-black"
     : "bg-gradient-to-br from-slate-50 via-white to-emerald-50/40",
-  card: isDark
-    ? "bg-white/[0.04] border-white/10 hover:bg-white/[0.06]"
-    : "bg-white/70 border-slate-200/70 hover:bg-white/90",
-  nav: isDark
-    ? "bg-black/70 border-white/10"
-    : "bg-white/80 border-slate-200/70",
+  card: "bg-card border-border hover:bg-surface-muted",
+  nav: "bg-sidebar border-border",
   text: {
-    primary: isDark ? "text-slate-50" : "text-slate-900",
-    secondary: isDark ? "text-slate-300/90" : "text-slate-600",
-    muted: isDark ? "text-slate-400/80" : "text-slate-500",
+    primary: "text-foreground",
+    secondary: "text-secondary-foreground",
+    muted: "text-muted-foreground",
   },
   button: {
     primary:
-      "bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white shadow-glow",
-    secondary: isDark
-      ? "bg-white/5 hover:bg-white/10 text-slate-100 border border-white/10"
-      : "bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-200",
-    ghost: isDark
-      ? "bg-transparent hover:bg-white/10 text-slate-300 hover:text-white"
-      : "bg-transparent hover:bg-slate-100 text-slate-700 hover:text-slate-900",
+      "bg-gradient-to-br from-brand-start to-brand-end hover:brightness-110 text-white shadow-glow",
+    secondary:
+      "bg-surface-muted hover:bg-secondary text-secondary-foreground border border-border",
+    ghost:
+      "bg-transparent hover:bg-surface-muted text-secondary-foreground hover:text-foreground",
   },
-  input: isDark
-    ? "bg-slate-900/60 border-white/10 text-white placeholder-slate-500 focus:bg-slate-900/80"
-    : "bg-white/70 border-slate-200 text-slate-900 placeholder-slate-400 focus:bg-white",
+  input: "bg-input border-border text-foreground placeholder:text-muted-foreground",
   accent: {
-    emerald: isDark ? "text-emerald-400" : "text-emerald-600",
-    teal: isDark ? "text-teal-400" : "text-teal-600",
-    cyan: isDark ? "text-cyan-400" : "text-cyan-600",
+    emerald: "text-accent-emerald",
+    teal: "text-accent-teal",
+    cyan: "text-accent-cyan",
   },
   badge: isDark
-    ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"
-    : "bg-emerald-50 text-emerald-700 border border-emerald-200/70",
+    ? "bg-accent-emerald/15 text-accent-emerald border border-accent-emerald/30"
+    : "bg-accent-emerald/10 text-accent-emerald border border-accent-emerald/25",
 });
 
 const resolvePreferredTheme = (): boolean => {

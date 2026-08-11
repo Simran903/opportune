@@ -246,11 +246,11 @@ const PostJob = () => {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 sm:gap-0">
             <div className="flex items-center gap-4">
-              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-glow">
+              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-brand-start to-brand-end rounded-2xl shadow-glow">
                 <Plus className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="eyebrow text-emerald-600 dark:text-emerald-400 mb-1">Create Listing</p>
+                <p className="eyebrow text-accent-emerald mb-1">Create Listing</p>
                 <h1 className={`text-2xl sm:text-3xl font-semibold ${theme.text.primary}`}>
                   Post New Job
                 </h1>
@@ -390,7 +390,7 @@ const PostJob = () => {
 
           {pendingDraft && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
-              <div className="rounded-xl p-4 sm:p-6 shadow-elevated border border-slate-200 dark:border-teal-500/30 bg-slate-100 dark:bg-black text-slate-900 dark:text-slate-50 backdrop-blur-xl w-full max-w-xs sm:max-w-sm">
+              <div className="rounded-xl p-4 sm:p-6 shadow-elevated border border-border-accent bg-popover text-popover-foreground backdrop-blur-xl w-full max-w-xs sm:max-w-sm">
                 <h3 className={`text-lg font-semibold mb-2 ${theme.text.primary}`}>Unsaved Changes</h3>
                 <p className={`${theme.text.secondary} mb-4`}>You have unsaved changes. Loading a draft will overwrite your current progress. Do you want to continue?</p>
                 <div className="flex gap-4 justify-end">

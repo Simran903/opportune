@@ -5,12 +5,15 @@ export function applyThemeMeta(isDark: boolean) {
   document.documentElement.classList.toggle("dark", isDark);
   document.documentElement.style.colorScheme = isDark ? "dark" : "light";
 
-  document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
-    meta.remove();
-  });
-
-  const meta = document.createElement("meta");
-  meta.setAttribute("name", "theme-color");
-  meta.setAttribute("content", isDark ? DARK_THEME_COLOR : LIGHT_THEME_COLOR);
-  document.head.appendChild(meta);
+  const meta = document.querySelector<HTMLMetaElement>(
+    'meta[name="theme-color"]'
+  );
+  if (meta) {
+    meta.setAttribute("content", isDark ? DARK_THEME_COLOR : LIGHT_THEME_COLOR);
+  } else {
+    const created = document.createElement("meta");
+    created.setAttribute("name", "theme-color");
+    created.setAttribute("content", isDark ? DARK_THEME_COLOR : LIGHT_THEME_COLOR);
+    document.head.appendChild(created);
+  }
 }

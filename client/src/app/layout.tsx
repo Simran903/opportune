@@ -62,11 +62,15 @@ export default function RootLayout({
                   var isDark = theme === 'dark' || (!theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
                   document.documentElement.classList.toggle('dark', isDark);
                   document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
-                  document.querySelectorAll('meta[name="theme-color"]').forEach(function(m) { m.remove(); });
-                  var meta = document.createElement('meta');
-                  meta.setAttribute('name', 'theme-color');
-                  meta.setAttribute('content', isDark ? '#0a1210' : '#f8fafc');
-                  document.head.appendChild(meta);
+                  var meta = document.querySelector('meta[name="theme-color"]');
+                  if (meta) {
+                    meta.setAttribute('content', isDark ? '#0a1210' : '#f8fafc');
+                  } else {
+                    var created = document.createElement('meta');
+                    created.setAttribute('name', 'theme-color');
+                    created.setAttribute('content', isDark ? '#0a1210' : '#f8fafc');
+                    document.head.appendChild(created);
+                  }
                 } catch (e) {
                   document.documentElement.classList.add('dark');
                   document.documentElement.style.colorScheme = 'dark';

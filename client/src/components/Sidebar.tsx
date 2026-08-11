@@ -281,7 +281,7 @@ export const Sidebar = () => {
       {/* Sign Out Confirm Dialog */}
       {showSignOutConfirm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-          <div className="bg-slate-100 dark:bg-black text-slate-900 dark:text-slate-50 rounded-lg p-6 w-full max-w-md border border-slate-200 dark:border-teal-500/30 shadow-elevated">
+          <div className="bg-popover text-popover-foreground rounded-lg p-6 w-full max-w-md border border-border-accent shadow-elevated">
             <h3
               className={`text-lg font-semibold ${getThemeClasses.text.primary} mb-2`}
             >
@@ -315,7 +315,7 @@ export const Sidebar = () => {
       {/* Password Update Modal */}
       {showPasswordModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-          <div className="bg-slate-100 dark:bg-black text-slate-900 dark:text-slate-50 rounded-lg p-6 w-full max-w-md border border-slate-200 dark:border-teal-500/30 shadow-elevated">
+          <div className="bg-popover text-popover-foreground rounded-lg p-6 w-full max-w-md border border-border-accent shadow-elevated">
             <h3
               className={`text-lg font-semibold ${getThemeClasses.text.primary} mb-4`}
             >
@@ -344,7 +344,7 @@ export const Sidebar = () => {
                   <button
                     type="button"
                     onClick={() => togglePasswordVisibility("current")}
-                    className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-md transition-colors duration-200 ${getThemeClasses.button.ghost} hover:bg-slate-100 dark:hover:bg-slate-700`}
+                    className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-md transition-colors duration-200 ${getThemeClasses.button.ghost} hover:bg-surface-muted`}
                     aria-label={
                       showPasswords.current ? "Hide password" : "Show password"
                     }
@@ -379,7 +379,7 @@ export const Sidebar = () => {
                   <button
                     type="button"
                     onClick={() => togglePasswordVisibility("new")}
-                    className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-md transition-colors duration-200 ${getThemeClasses.button.ghost} hover:bg-slate-100 dark:hover:bg-slate-700`}
+                    className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-md transition-colors duration-200 ${getThemeClasses.button.ghost} hover:bg-surface-muted`}
                     aria-label={
                       showPasswords.new ? "Hide password" : "Show password"
                     }
@@ -414,7 +414,7 @@ export const Sidebar = () => {
                   <button
                     type="button"
                     onClick={() => togglePasswordVisibility("confirm")}
-                    className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-md transition-colors duration-200 ${getThemeClasses.button.ghost} hover:bg-slate-100 dark:hover:bg-slate-700`}
+                    className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-md transition-colors duration-200 ${getThemeClasses.button.ghost} hover:bg-surface-muted`}
                     aria-label={
                       showPasswords.confirm ? "Hide password" : "Show password"
                     }
