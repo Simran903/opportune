@@ -70,7 +70,7 @@ const Jobs = () => {
       const message =
         err.response?.status === 503 || err.response?.status === 500
           ? err.response?.data?.message ||
-            "Could not reach the database. Please wait a moment and try again."
+          "Could not reach the database. Please wait a moment and try again."
           : err.response?.data?.message || "Failed to fetch jobs";
 
       setError(message);
@@ -306,16 +306,18 @@ const Jobs = () => {
         </div>
 
         {/* Filters and Search */}
-        <div className={`rounded-2xl p-4 sm:p-5 mb-6 border backdrop-blur-xl shadow-soft ${pageSurface()}`}>
+        <div className={`rounded-2xl p-4 sm:p-5 mb-6 border shadow-soft ${pageSurface()}`}>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                <Search className="w-4 h-4 text-muted-foreground transform-gpu" />
+              </div>
               <Input
                 type="text"
                 placeholder="Search jobs by title, company, or location..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full"
+                className="pl-10 w-full backdrop-blur-none"
               />
             </div>
           </div>
@@ -323,7 +325,7 @@ const Jobs = () => {
 
         {/* Jobs Grid */}
         {filteredJobs.length === 0 ? (
-<div className={`rounded-2xl p-8 sm:p-12 text-center border backdrop-blur-xl shadow-soft ${pageSurface()}`}>
+          <div className={`rounded-2xl p-8 sm:p-12 text-center border backdrop-blur-xl shadow-soft ${pageSurface()}`}>
             <div className="w-16 h-16 bg-surface-muted rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Briefcase className="w-8 h-8 text-muted-foreground" />
             </div>
