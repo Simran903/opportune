@@ -1,5 +1,5 @@
+import { Sun, Moon } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
-import { ThemeToggleButton } from "../ThemeToggleButton";
 import { SidebarTooltip } from "./SidebarTooltip";
 import { AccountCard } from "./AccountCard";
 
@@ -18,36 +18,40 @@ export const SidebarFooter = ({
   onUpdatePassword,
   onSignOut,
 }: SidebarFooterProps) => {
-  const { isDark, getThemeClasses } = useTheme();
+  const { isDark, toggleTheme, getThemeClasses } = useTheme();
 
   return (
     <div
-      className={`border-t border-slate-700/50 ${isCollapsed ? "px-2 py-3" : "p-4"
-        } relative z-10 space-y-3`}
+      className={`relative z-10 ${isCollapsed ? "px-2 pt-3 pb-4" : "px-3 pt-3 pb-4"
+        } transition-colors duration-200`}
     >
-      {/* Theme toggle */}
+      {/* Light Mode */}
       <div className="relative group">
-        <div
-          className={`w-full flex items-center ${isCollapsed ? "justify-center" : "gap-3 px-3 py-1"
-            } transition-all duration-200`}
+        <button
+          onClick={toggleTheme}
+          className={`group flex items-center gap-3 h-9 rounded-[10px] text-sm font-medium transition-all duration-200 ${
+            isCollapsed ? "justify-center px-0 w-9 mx-auto" : "w-full px-3"
+          } ${getThemeClasses.text.secondary} hover:bg-surface-muted hover:text-foreground`}
         >
-          <ThemeToggleButton className="border-none shadow-none" />
+          <span className="w-5 flex justify-center flex-shrink-0">
+            {isDark ? (
+              <Sun className="w-[18px] h-[18px] text-amber-300/90" />
+            ) : (
+              <Moon className="w-[18px] h-[18px] text-slate-500" />
+            )}
+          </span>
           {!isCollapsed && (
-            <span
-              className={`text-sm font-medium ${getThemeClasses.text.secondary} transition-colors duration-200`}
-            >
-              {isDark ? "Light Mode" : "Dark Mode"}
-            </span>
+            <span className="truncate">{isDark ? "Light Mode" : "Dark Mode"}</span>
           )}
-        </div>
+        </button>
         {isCollapsed && (
           <SidebarTooltip>{isDark ? "Light Mode" : "Dark Mode"}</SidebarTooltip>
         )}
       </div>
 
-      {!isCollapsed && <div className="h-px bg-slate-700/40" />}
+      {!isCollapsed && <div className="h-px bg-border/60 my-3" />}
 
-      {/* Account card */}
+      {/* Account section */}
       <AccountCard
         isCollapsed={isCollapsed}
         name={name}

@@ -207,7 +207,7 @@ export const Sidebar = () => {
             : "-translate-x-full md:translate-x-0"
           }
           transition-all duration-300 ease-in-out
-          ${getThemeClasses.nav} backdrop-blur-xl border-r border-slate-700/50
+          ${getThemeClasses.nav} backdrop-blur-xl border-r border-border/70
           flex flex-col justify-between
         `}
       >
