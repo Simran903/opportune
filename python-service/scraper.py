@@ -12,6 +12,7 @@ load_dotenv()
 DEBUG = False
 
 SCRAPER_API_KEY = os.getenv("SCRAPER_API_KEY")
+BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL").rstrip("/")
 
 _kw_model = None
 
@@ -151,7 +152,7 @@ def extract_linkedin_profiles_from_html(html_content: str) -> list[dict]:
 def fetch_seen_profiles(employer_id: int, job_id: int | None = None) -> set[str]:
     """Fetch already seen LinkedIn profile URLs for an employer from backend."""
     try:
-        url = f"http://localhost:5000/api/v1/job/employer/{employer_id}/seen-profiles"
+        url = f"{BACKEND_BASE_URL}/api/v1/job/employer/{employer_id}/seen-profiles"
         if job_id is not None:
             url += f"?jobId={job_id}"
         response = requests.get(url, timeout=10)
@@ -173,7 +174,7 @@ def fetch_seen_profiles(employer_id: int, job_id: int | None = None) -> set[str]
 def save_profiles(employer_id: int, job_id: int, profiles: list[dict]):
     """Send new profiles to backend to save in DB."""
     try:
-        url = f"http://localhost:5000/api/v1/job/employer/{employer_id}/profiles"
+        url = f"{BACKEND_BASE_URL}/api/v1/job/employer/{employer_id}/profiles"
         response = requests.post(
             url,
             json={"profiles": profiles, "jobId": job_id},

@@ -2,7 +2,7 @@ import axios from 'axios';
 import { TokenManager, SessionManager, CSRFProtection, SecurityLogger } from './security';
 
 const axiosClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5000/api/v1',
+  baseURL: process.env.NEXT_PUBLIC_BASE_URL,
   withCredentials: true,
 });
 
