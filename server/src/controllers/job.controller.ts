@@ -39,7 +39,7 @@ export const addJob = async (req, res) => {
     });
 
     axios
-      .post("http://127.0.0.1:10000/scrape", {
+      .post(`${process.env.SCRAPE_SERVICE_URL}/scrape`, {
         description,
         employer_id: userId,
         job_id: job.id,
